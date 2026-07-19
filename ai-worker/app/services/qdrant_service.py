@@ -35,6 +35,7 @@ class QdrantService:
 
     def upsert_embedding(
         self,
+        point_id: str,
         embedding: list[float],
         payload: VectorPayload,
         ):
@@ -42,7 +43,7 @@ class QdrantService:
             collection_name=self.COLLECTION_NAME,
             points=[
                 PointStruct(
-                    id=str(uuid4()),
+                    id=point_id,
                     vector=embedding,
                     payload=payload.model_dump(),
                 )

@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-router = APIRouter(prefix="/health", tags=["Embeddings"])
+router = APIRouter(prefix="/health", tags=["health"])
 
 
 @router.get("")

@@ -2,7 +2,7 @@ from app.clients.gemini_client import client
 from app.models.embedding import EmbeddingResponse
 
 
-class EmbeddingService:
+class GeminiService:
 
     def generate_embedding(self, text: str) -> list[float]:
         response = client.models.embed_content(
@@ -27,4 +27,4 @@ class EmbeddingService:
         return response.text
 
 
-embedding_service = EmbeddingService()
+gemini_service = GeminiService()

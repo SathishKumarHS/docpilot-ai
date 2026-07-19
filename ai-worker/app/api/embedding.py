@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app.models.embedding import EmbeddingRequest, EmbeddingResponse
-from app.services.embedding_service import embedding_service
+from app.services.gemini_service import gemini_service
 from uuid import uuid4
 
 from app.models.vector import VectorPayload
@@ -11,7 +11,7 @@ router = APIRouter(prefix="/embeddings", tags=["Embeddings"])
 
 @router.post("", response_model=EmbeddingResponse)
 def generate_embedding(request: EmbeddingRequest):
-    embedding_response = embedding_service.generate_embedding(request.text)
+    embedding_response = gemini_service.generate_embedding(request.text)
 
     payload = VectorPayload(
         document_id=uuid4(),

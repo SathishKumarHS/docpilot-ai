@@ -35,6 +35,7 @@ dependencies {
     implementation("org.postgresql:postgresql")
     implementation(kotlin("stdlib"))
     implementation("org.apache.pdfbox:pdfbox:3.0.2")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
 }
 
 kotlin {
