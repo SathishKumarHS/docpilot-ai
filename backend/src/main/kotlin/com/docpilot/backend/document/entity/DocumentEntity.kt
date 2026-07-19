@@ -16,5 +16,5 @@ class DocumentEntity(
 
     val size: Long,
 
-    val uploadedAt: Instant
+    val uploadedAt: Instant,
 )

@@ -2,8 +2,10 @@ package com.docpilot.backend.document.service
 
 import com.docpilot.backend.document.dto.DocumentResponse
 import com.docpilot.backend.document.dto.UploadDocumentResponse
+import com.docpilot.backend.document.entity.DocumentChunkEntity
 import com.docpilot.backend.document.entity.DocumentEntity
 import com.docpilot.backend.document.model.Document
+import com.docpilot.backend.document.repository.DocumentChunkRepository
 import com.docpilot.backend.document.repository.DocumentRepository
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
@@ -14,7 +16,10 @@ import java.util.UUID
 class DocumentService (
     private val validationService: DocumentValidationService,
     private val localStorageService: LocalStorageService,
-    private val repository: DocumentRepository
+    private val pdfExtractionService: PdfExtractionService,
+    private val documentChunkingService: DocumentChunkingService,
+    private val documentRepository: DocumentRepository,
+    private val documentChunkRepository: DocumentChunkRepository
 ) {
     private val documents = mutableListOf<Document>()
 
@@ -30,14 +35,30 @@ class DocumentService (
             uploadedAt = Instant.now()
         )
 
-        repository.save(
-            DocumentEntity(
-                id = document.id,
-                fileName = document.fileName,
-                size = file.size,
-                uploadedAt = document.uploadedAt
-            )
+        val content = pdfExtractionService.extractText(file)
+
+        val chunks = documentChunkingService.chunk(content)
+
+        val documentEntity = DocumentEntity(
+            id = document.id,
+            fileName = document.fileName,
+            size = file.size,
+            uploadedAt = document.uploadedAt,
         )
+        documentRepository.save(
+            documentEntity
+        )
+
+        for ((i, element) in chunks.withIndex()) {
+            documentChunkRepository.save(
+                DocumentChunkEntity(
+                    id = UUID.randomUUID(),
+                    chunkIndex = i,
+                    content = element,
+                    document = documentEntity
+                )
+            )
+        }
 
         return UploadDocumentResponse(
             id = document.id,
@@ -48,7 +69,7 @@ class DocumentService (
     }
 
     fun getAllDocuments(): List<DocumentResponse> {
-        return repository.findAll()
+        return documentRepository.findAll()
             .map {
                 DocumentResponse(
                     id = it.id,
