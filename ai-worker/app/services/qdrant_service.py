@@ -1,0 +1,78 @@
+from app.models.search import SearchResult
+from app.api import embedding
+from qdrant_client.models import Distance, VectorParams
+
+from app.clients.qdrant_client import qdrant_client
+from uuid import uuid4
+from qdrant_client.models import PointStruct
+from app.models.vector import VectorPayload
+
+class QdrantService:
+
+    COLLECTION_NAME = "document_chunks"
+
+    def create_collection(self):
+        collections = qdrant_client.get_collections()
+
+        existing = [
+            collection.name
+            for collection in collections.collections
+        ]
+
+        if self.COLLECTION_NAME in existing:
+            print(f"Collection '{self.COLLECTION_NAME}' already exists.")
+            return
+
+        qdrant_client.create_collection(
+            collection_name=self.COLLECTION_NAME,
+            vectors_config=VectorParams(
+                size=3072,
+                distance=Distance.COSINE,
+            ),
+        )
+
+        print(f"Collection '{self.COLLECTION_NAME}' created.")
+
+    def upsert_embedding(
+        self,
+        embedding: list[float],
+        payload: VectorPayload,
+        ):
+        qdrant_client.upsert(
+            collection_name=self.COLLECTION_NAME,
+            points=[
+                PointStruct(
+                    id=str(uuid4()),
+                    vector=embedding,
+                    payload=payload.model_dump(),
+                )
+            ],
+        )
+    
+    def search(
+        self,
+        embedding: list[float],
+        limit: int = 5,
+    ):
+        response = qdrant_client.query_points(
+            collection_name=self.COLLECTION_NAME,
+            query=embedding,
+            limit=limit,
+        )
+
+        results = []
+
+        for point in response.points:
+            results.append(
+                SearchResult(
+                score=point.score,
+                document_id=point.payload["document_id"],
+                chunk_index=point.payload["chunk_index"],
+                text=point.payload["text"],
+            )
+        )
+
+        return results
+
+
+qdrant_service = QdrantService()
