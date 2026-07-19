@@ -1,5 +1,6 @@
 package com.docpilot.backend.document.controller
 
+import com.docpilot.backend.document.dto.DocumentResponse
 import com.docpilot.backend.document.dto.UploadDocumentResponse
 import com.docpilot.backend.document.service.DocumentService
 import org.springframework.web.bind.annotation.*
@@ -19,5 +20,10 @@ class DocumentController(
 
         return documentService.upload(file)
 
+    }
+
+    @GetMapping
+    fun getAllDocuments(): List<DocumentResponse> {
+        return documentService.getAllDocuments()
     }
 }

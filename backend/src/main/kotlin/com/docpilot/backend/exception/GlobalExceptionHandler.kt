@@ -9,16 +9,31 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 class GlobalExceptionHandler {
 
     @ExceptionHandler(UnsupportedDocumentTypeException::class)
-    fun handleUnsupportedDocumentType(
+    fun handleUnsupportedDocumentSize(
         ex: UnsupportedDocumentTypeException
     ): ResponseEntity<ErrorResponse> {
 
         return ResponseEntity
-            .status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+            .status(HttpStatus.CONTENT_TOO_LARGE)
             .body(
                 ErrorResponse(
                     status = 415,
                     message = ex.message ?: "Unsupported document type"
+                )
+            )
+    }
+
+    @ExceptionHandler(UnsupportedDocumentSizeException::class)
+    fun handleUnsupportedDocumentType(
+        ex: UnsupportedDocumentSizeException
+    ): ResponseEntity<ErrorResponse> {
+
+        return ResponseEntity
+            .status(HttpStatus.CONTENT_TOO_LARGE)
+            .body(
+                ErrorResponse(
+                    status = 415,
+                    message = ex.message ?: "Unsupported document size"
                 )
             )
     }

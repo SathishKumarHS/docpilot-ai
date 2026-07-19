@@ -1,5 +1,6 @@
 package com.docpilot.backend.document.service
 
+import com.docpilot.backend.exception.UnsupportedDocumentSizeException
 import com.docpilot.backend.exception.UnsupportedDocumentTypeException
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
@@ -22,7 +23,7 @@ class DocumentValidationService {
         }
 
         if (file.size > maxFileSize) {
-            throw IllegalArgumentException("File size cannot exceed 10 MB")
+            throw UnsupportedDocumentSizeException("File size cannot exceed 10 MB")
         }
     }
 }
