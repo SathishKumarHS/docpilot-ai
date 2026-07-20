@@ -18,57 +18,44 @@ class AiWorkerClient(
         request: IndexDocumentRequest,
         clientId: UUID,
     ): IndexDocumentResponse {
-        return try {
-            aiWorkerWebClient
-                .post()
-                .uri("/documents/index")
-                .header("X-Client-Id", clientId.toString())
-                .bodyValue(request)
-                .retrieve()
-                .onStatus({ it.isError }) { response ->
-                    response.bodyToMono(String::class.java)
-                        .map { body ->
-                            println("AI Worker Error: $body")
-                            AiWorkerException(body)
-                        }
-                }
-                .bodyToMono(IndexDocumentResponse::class.java)
-                .block()
-                ?: throw AiWorkerException(
-                    "AI Worker returned an empty response."
-                )
-        } catch (ex: Exception) {
-            throw AiWorkerException(
-                "Failed to index document using AI Worker.",
-                ex
-            )
-        }
+        return aiWorkerWebClient
+            .post()
+            .uri("/documents/index")
+            .header("X-Client-Id", clientId.toString())
+            .bodyValue(request)
+            .retrieve()
+            .onStatus({ it.isError }) { response ->
+                response.bodyToMono(String::class.java)
+                    .map { body ->
+                        println("AI Worker Error: $body")
+                        AiWorkerException(body)
+                    }
+            }
+            .bodyToMono(IndexDocumentResponse::class.java)
+            .block()
+            ?: throw AiWorkerException("AI Worker returned an empty response.")
     }
 
     fun ask(
         request: AskRequest,
         clientId: UUID,
     ): AskResponse {
-        return try {
-            aiWorkerWebClient
-                .post()
-                .uri("/ask")
-                .header("X-Client-Id", clientId.toString())
-                .bodyValue(request)
-                .retrieve()
-                .onStatus({ it.isError }) { response ->
-                    response.bodyToMono(String::class.java)
-                        .map { body ->
-                            println("AI Worker Error: $body")
-                            AiWorkerException(body)
-                        }
-                }
-                .bodyToMono(AskResponse::class.java)
-                .block()
-                ?: throw AiWorkerException("AI Worker returned an empty response.")
-        } catch (ex: Exception) {
-            throw AiWorkerException("Failed to ask AI Worker.", ex)
-        }
+        return aiWorkerWebClient
+            .post()
+            .uri("/ask")
+            .header("X-Client-Id", clientId.toString())
+            .bodyValue(request)
+            .retrieve()
+            .onStatus({ it.isError }) { response ->
+                response.bodyToMono(String::class.java)
+                    .map { body ->
+                        println("AI Worker Error: $body")
+                        AiWorkerException(body)
+                    }
+            }
+            .bodyToMono(AskResponse::class.java)
+            .block()
+            ?: throw AiWorkerException("AI Worker returned an empty response.")
     }
 
     fun deleteDocument(

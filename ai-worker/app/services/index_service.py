@@ -1,5 +1,4 @@
 from app.models.index import (
-    ChunkRequest,
     IndexDocumentRequest,
     IndexDocumentResponse,
 )
@@ -16,24 +15,21 @@ class IndexService:
         client_id: str,
     ) -> IndexDocumentResponse:
 
-        for chunk in request.chunks:
+        texts = [chunk.text for chunk in request.chunks]
 
-            embedding_response = gemini_service.generate_embedding(
-                chunk.text
-            )
+        embeddings = gemini_service.generate_embeddings_batch(texts)
 
+        points = []
+        for chunk, emb in zip(request.chunks, embeddings):
             payload = VectorPayload(
                 document_id=request.document_id,
                 chunk_index=chunk.chunk_index,
                 text=chunk.text,
                 client_id=client_id,
             )
+            points.append((str(chunk.chunk_id), emb.embedding, payload))
 
-            qdrant_service.upsert_embedding(
-                point_id=str(chunk.chunk_id),
-                embedding=embedding_response.embedding,
-                payload=payload,
-            )
+        qdrant_service.upsert_embeddings_batch(points)
 
         return IndexDocumentResponse(
             indexed_chunks=len(request.chunks)

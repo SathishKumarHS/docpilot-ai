@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { Send, ArrowLeft, Sparkles, FileText, User } from "lucide-react"
+import { getClientId } from "../lib/client-id"
 
 interface ChatMessage {
   role: "user" | "assistant"
@@ -11,8 +12,9 @@ export default function Chat() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  // grab filename from upload page
-  const fileName = (location.state as { fileName?: string })?.fileName ?? "document.pdf"
+  const state = location.state as { documentId?: string; fileName?: string } | null
+  const fileName = state?.fileName ?? "document.pdf"
+  const documentId = state?.documentId
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -23,34 +25,52 @@ export default function Chat() {
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
-  // auto scroll to bottom
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  function handleSend() {
+  async function handleSend() {
     const text = inputValue.trim()
     if (!text || isLoading) return
 
     setInputValue("")
 
-    // add user message
     setMessages((prev) => [...prev, { role: "user", content: text }])
     setIsLoading(true)
 
-    // simulate AI response
-    setTimeout(() => {
+    try {
+      const response = await fetch("/api/v1/ask", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Client-Id": getClientId(),
+        },
+        body: JSON.stringify({ question: text }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to get answer")
+      }
+
+      const data = await response.json()
+
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: data.answer },
+      ])
+    } catch {
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: `This is a simulated response for: "${text}". In production, this would query the PDF content via an AI backend.`,
+          content: "Sorry, I couldn't process your question. Please try again.",
         },
       ])
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -103,7 +123,7 @@ export default function Chat() {
             )}
 
             <div
-              className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+              className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
                 msg.role === "user"
                   ? "bg-primary text-primary-foreground rounded-tr-sm"
                   : "bg-secondary text-foreground rounded-tl-sm"

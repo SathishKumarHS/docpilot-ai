@@ -9,6 +9,8 @@ from app.api.delete import router as document_router
 
 from contextlib import asynccontextmanager
 
+from app.exceptions import AiWorkerError
+from app.error_handler import ai_worker_error_handler
 from app.services.qdrant_service import qdrant_service
 
 @asynccontextmanager
@@ -25,6 +27,8 @@ app = FastAPI(
     title="DocPilot AI Worker",
     lifespan=lifespan,
 )
+
+app.add_exception_handler(AiWorkerError, ai_worker_error_handler)
 
 app.include_router(health_router)
 app.include_router(embedding_router)

@@ -1,11 +1,13 @@
 import { useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { Upload as UploadIcon, FileText, ArrowLeft, Sparkles } from "lucide-react"
+import { Upload as UploadIcon, FileText, ArrowLeft, Sparkles, Loader2 } from "lucide-react"
+import { getClientId } from "../lib/client-id"
 
 export default function UploadPage() {
   const navigate = useNavigate()
   const [file, setFile] = useState<File | null>(null)
   const [isDragOver, setIsDragOver] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   function handleFilePick(f: File) {
@@ -40,10 +42,40 @@ export default function UploadPage() {
     setFile(null)
   }
 
-  function handleAnalyze() {
-    if (!file) return
-    // pass filename to chat page
-    navigate("/chat", { state: { fileName: file.name } })
+  async function handleAnalyze() {
+    if (!file || isUploading) return
+
+    setIsUploading(true)
+
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await fetch("/api/v1/documents", {
+        method: "POST",
+        headers: {
+          "X-Client-Id": getClientId(),
+        },
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error("Upload failed")
+      }
+
+      const data = await response.json()
+
+      navigate("/chat", {
+        state: {
+          documentId: data.id,
+          fileName: data.fileName,
+        },
+      })
+    } catch {
+      alert("Failed to upload document. Please try again.")
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   const dropZoneClass = isDragOver
@@ -132,11 +164,15 @@ export default function UploadPage() {
 
           <button
             onClick={handleAnalyze}
-            disabled={!file}
+            disabled={!file || isUploading}
             className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-medium text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
           >
-            <Sparkles className="h-5 w-5" />
-            Analyze Document
+            {isUploading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Sparkles className="h-5 w-5" />
+            )}
+            {isUploading ? "Uploading..." : "Analyze Document"}
           </button>
         </div>
       </main>
