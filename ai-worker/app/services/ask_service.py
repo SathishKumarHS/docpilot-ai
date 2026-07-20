@@ -5,11 +5,12 @@ from app.services.qdrant_service import qdrant_service
 
 class AskService:
 
-    def ask(self, question: str) -> str:
+    def ask(self, question: str, client_id: str) -> str:
         embedding_response = gemini_service.generate_embedding(question)
 
         search_results = qdrant_service.search(
-            embedding_response.embedding
+            embedding_response.embedding,
+            client_id=client_id,
         )
 
         prompt = build_rag_prompt(

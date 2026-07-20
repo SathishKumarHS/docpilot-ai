@@ -1,7 +1,6 @@
 from uuid import UUID
 from app.config.settings import settings
 from app.models.search import SearchResult
-from app.api import embedding
 from qdrant_client.models import Distance, VectorParams
 from qdrant_client.http.models import PayloadSchemaType
 
@@ -47,6 +46,12 @@ class QdrantService:
             field_schema=PayloadSchemaType.KEYWORD,
         )
 
+        qdrant_client.create_payload_index(
+            collection_name=settings.qdrant_collection_name,
+            field_name="client_id",
+            field_schema=PayloadSchemaType.KEYWORD,
+        )
+
         print(f"Collection '{self.COLLECTION_NAME}' created.")
 
     def upsert_embedding(
@@ -65,16 +70,25 @@ class QdrantService:
                 )
             ],
         )
-    
+
     def search(
         self,
         embedding: list[float],
+        client_id: str,
         limit: int = 5,
     ):
         response = qdrant_client.query_points(
             collection_name=self.COLLECTION_NAME,
             query=embedding,
             limit=limit,
+            query_filter=Filter(
+                must=[
+                    FieldCondition(
+                        key="client_id",
+                        match=MatchValue(value=client_id),
+                    )
+                ]
+            ),
         )
 
         results = []
@@ -93,7 +107,8 @@ class QdrantService:
 
     def delete(
         self,
-        document_id: UUID
+        document_id: UUID,
+        client_id: str,
     ):
         qdrant_client.delete(
             collection_name=self.COLLECTION_NAME,
@@ -103,7 +118,11 @@ class QdrantService:
                         FieldCondition(
                             key="document_id",
                             match=MatchValue(value=str(document_id)),
-                        )
+                        ),
+                        FieldCondition(
+                            key="client_id",
+                            match=MatchValue(value=client_id),
+                        ),
                     ]
                 )
             ),

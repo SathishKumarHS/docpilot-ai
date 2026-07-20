@@ -95,7 +95,7 @@ class DocumentService (
             }
         )
 
-        aiWorkerClient.indexDocument(request)
+        aiWorkerClient.indexDocument(request, owner.ownerId)
 
 
 
@@ -122,7 +122,7 @@ class DocumentService (
     @Transactional
     fun deleteDocument(document: DocumentEntity) {
         // Step 1: Delete vectors
-        aiWorkerClient.deleteDocument(document.id)
+        aiWorkerClient.deleteDocument(document.id, document.ownerId)
 
         // Step 2: Delete chunks
         documentChunkRepository.deleteByDocumentId(document.id)

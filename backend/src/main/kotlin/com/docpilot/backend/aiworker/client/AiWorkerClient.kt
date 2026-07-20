@@ -16,11 +16,13 @@ class AiWorkerClient(
 
     fun indexDocument(
         request: IndexDocumentRequest,
+        clientId: UUID,
     ): IndexDocumentResponse {
         return try {
             aiWorkerWebClient
                 .post()
                 .uri("/documents/index")
+                .header("X-Client-Id", clientId.toString())
                 .bodyValue(request)
                 .retrieve()
                 .onStatus({ it.isError }) { response ->
@@ -43,11 +45,15 @@ class AiWorkerClient(
         }
     }
 
-    fun ask(request: AskRequest): AskResponse {
+    fun ask(
+        request: AskRequest,
+        clientId: UUID,
+    ): AskResponse {
         return try {
             aiWorkerWebClient
                 .post()
                 .uri("/ask")
+                .header("X-Client-Id", clientId.toString())
                 .bodyValue(request)
                 .retrieve()
                 .onStatus({ it.isError }) { response ->
@@ -65,9 +71,13 @@ class AiWorkerClient(
         }
     }
 
-    fun deleteDocument(documentId: UUID) {
+    fun deleteDocument(
+        documentId: UUID,
+        clientId: UUID,
+    ) {
         aiWorkerWebClient.delete()
             .uri("/documents/{documentId}", documentId)
+            .header("X-Client-Id", clientId.toString())
             .retrieve()
             .toBodilessEntity()
             .block()

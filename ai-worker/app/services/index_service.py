@@ -13,6 +13,7 @@ class IndexService:
     def index_document(
         self,
         request: IndexDocumentRequest,
+        client_id: str,
     ) -> IndexDocumentResponse:
 
         for chunk in request.chunks:
@@ -25,6 +26,7 @@ class IndexService:
                 document_id=request.document_id,
                 chunk_index=chunk.chunk_index,
                 text=chunk.text,
+                client_id=client_id,
             )
 
             qdrant_service.upsert_embedding(

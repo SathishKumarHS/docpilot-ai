@@ -7,3 +7,4 @@ class VectorPayload(BaseModel):
     document_id: UUID
     chunk_index: int
     text: str
+    client_id: str

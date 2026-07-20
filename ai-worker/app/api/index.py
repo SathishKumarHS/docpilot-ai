@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Header
 
 from app.models.index import (
     IndexDocumentRequest,
@@ -16,5 +16,8 @@ router = APIRouter(
     "/index",
     response_model=IndexDocumentResponse,
 )
-def index_document(request: IndexDocumentRequest):
-    return index_service.index_document(request)
+def index_document(
+    request: IndexDocumentRequest,
+    x_client_id: str = Header(...),
+):
+    return index_service.index_document(request, x_client_id)
