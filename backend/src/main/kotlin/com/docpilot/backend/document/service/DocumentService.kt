@@ -3,6 +3,8 @@ package com.docpilot.backend.document.service
 import com.docpilot.backend.aiworker.client.AiWorkerClient
 import com.docpilot.backend.aiworker.dto.ChunkRequest
 import com.docpilot.backend.aiworker.dto.IndexDocumentRequest
+import com.docpilot.backend.auth.model.OwnerContext
+import com.docpilot.backend.auth.model.OwnerType
 import com.docpilot.backend.document.dto.DocumentResponse
 import com.docpilot.backend.document.dto.UploadDocumentResponse
 import com.docpilot.backend.document.entity.DocumentChunkEntity
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @Service
@@ -29,7 +32,7 @@ class DocumentService (
 ) {
 
     @Transactional
-    fun upload(file: MultipartFile): UploadDocumentResponse {
+    fun upload(file: MultipartFile, owner: OwnerContext): UploadDocumentResponse {
 
         validationService.validate(file)
 
@@ -41,6 +44,15 @@ class DocumentService (
             uploadedAt = Instant.now()
         )
 
+        val existingDocument = documentRepository.findByOwnerTypeAndOwnerId(
+            owner.ownerType,
+            owner.ownerId
+        )
+
+        if (existingDocument != null) {
+            deleteDocument(existingDocument)
+        }
+
         val content = pdfExtractionService.extractText(file)
 
         val chunks = documentChunkingService.chunk(content)
@@ -50,6 +62,12 @@ class DocumentService (
             fileName = document.fileName,
             size = file.size,
             uploadedAt = document.uploadedAt,
+            ownerType = owner.ownerType,
+            ownerId = owner.ownerId,
+            expiresAt = when (owner.ownerType) {
+                OwnerType.ANONYMOUS -> Instant.now().plus(1, ChronoUnit.DAYS)
+                OwnerType.USER -> Instant.now().plus(7, ChronoUnit.DAYS)
+            }
         )
         documentRepository.save(
             documentEntity
@@ -100,4 +118,17 @@ class DocumentService (
                 )
             }
     }
+
+    @Transactional
+    fun deleteDocument(document: DocumentEntity) {
+        // Step 1: Delete vectors
+        aiWorkerClient.deleteDocument(document.id)
+
+        // Step 2: Delete chunks
+        documentChunkRepository.deleteByDocumentId(document.id)
+
+        // Step 3: Delete document
+        documentRepository.delete(document)
+    }
+
 }

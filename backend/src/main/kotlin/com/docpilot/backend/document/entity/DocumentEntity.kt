@@ -1,5 +1,6 @@
 package com.docpilot.backend.document.entity
 
+import com.docpilot.backend.auth.model.OwnerType
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
@@ -17,4 +18,10 @@ class DocumentEntity(
     val size: Long,
 
     val uploadedAt: Instant,
+
+    val ownerId : UUID,
+
+    val ownerType : OwnerType,
+
+    var expiresAt: Instant?,
 )

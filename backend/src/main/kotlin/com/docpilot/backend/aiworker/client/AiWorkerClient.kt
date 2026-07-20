@@ -5,6 +5,7 @@ import com.docpilot.backend.aiworker.dto.IndexDocumentResponse
 import com.docpilot.backend.aiworker.exception.AiWorkerException
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import java.util.UUID
 
 @Component
 class AiWorkerClient(
@@ -38,5 +39,13 @@ class AiWorkerClient(
                 ex
             )
         }
+    }
+
+    fun deleteDocument(documentId: UUID) {
+        aiWorkerWebClient.delete()
+            .uri("/documents/{documentId}", documentId)
+            .retrieve()
+            .toBodilessEntity()
+            .block()
     }
 }

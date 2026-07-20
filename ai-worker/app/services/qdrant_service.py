@@ -1,3 +1,5 @@
+from uuid import UUID
+from app.config import settings
 from app.models.search import SearchResult
 from app.api import embedding
 from qdrant_client.models import Distance, VectorParams
@@ -6,6 +8,13 @@ from app.clients.qdrant_client import qdrant_client
 from uuid import uuid4
 from qdrant_client.models import PointStruct
 from app.models.vector import VectorPayload
+
+from qdrant_client.http.models import (
+    Filter,
+    FilterSelector,
+    FieldCondition,
+    MatchValue,
+)
 
 class QdrantService:
 
@@ -74,6 +83,24 @@ class QdrantService:
         )
 
         return results
+
+    def delete(
+        self,
+        document_id: UUID
+    ):
+        qdrant_client.delete(
+            collection_name=self.COLLECTION_NAME,
+            points_selector=FilterSelector(
+                filter=Filter(
+                    must=[
+                        FieldCondition(
+                            key="document_id",
+                            match=MatchValue(value=str(document_id)),
+                        )
+                    ]
+                )
+            ),
+        )
 
 
 qdrant_service = QdrantService()
