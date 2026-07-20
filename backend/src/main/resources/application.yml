@@ -1,8 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/docpilot
-    username: postgres
-    password: postgres
+    url: ${DATABASE_URL}
 
   jpa:
     hibernate:
@@ -11,4 +9,4 @@ spring:
     show-sql: true
 
 ai-worker:
-  base-url: http://localhost:8000
+  base-url: ${AI_WORKER_BASE_URL}
