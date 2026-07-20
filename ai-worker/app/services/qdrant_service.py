@@ -1,5 +1,5 @@
 from uuid import UUID
-from app.config import settings
+from app.config.settings import settings
 from app.models.search import SearchResult
 from app.api import embedding
 from qdrant_client.models import Distance, VectorParams
@@ -18,7 +18,7 @@ from qdrant_client.http.models import (
 
 class QdrantService:
 
-    COLLECTION_NAME = "document_chunks"
+    COLLECTION_NAME = settings.qdrant_collection_name
 
     def create_collection(self):
         collections = qdrant_client.get_collections()
