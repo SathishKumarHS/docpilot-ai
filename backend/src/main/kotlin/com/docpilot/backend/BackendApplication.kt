@@ -13,7 +13,5 @@ import org.springframework.boot.runApplication
 class BackendApplication
 
 fun main(args: Array<String>) {
-    println("DATABASE_URL = ${System.getenv("DATABASE_URL")}")
-    println("AI_WORKER_BASE_URL = ${System.getenv("AI_WORKER_BASE_URL")}")
     runApplication<BackendApplication>(*args)
 }

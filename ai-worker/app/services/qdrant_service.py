@@ -3,6 +3,7 @@ from app.config.settings import settings
 from app.models.search import SearchResult
 from app.api import embedding
 from qdrant_client.models import Distance, VectorParams
+from qdrant_client.http.models import PayloadSchemaType
 
 from app.clients.qdrant_client import qdrant_client
 from uuid import uuid4
@@ -31,6 +32,12 @@ class QdrantService:
         if self.COLLECTION_NAME in existing:
             print(f"Collection '{self.COLLECTION_NAME}' already exists.")
             return
+        
+        qdrant_client.create_payload_index(
+            collection_name=settings.qdrant_collection_name,
+            field_name="document_id",
+            field_schema=PayloadSchemaType.KEYWORD,
+        )
 
         qdrant_client.create_collection(
             collection_name=self.COLLECTION_NAME,
