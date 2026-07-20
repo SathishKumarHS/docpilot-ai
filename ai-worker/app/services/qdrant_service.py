@@ -32,12 +32,6 @@ class QdrantService:
         if self.COLLECTION_NAME in existing:
             print(f"Collection '{self.COLLECTION_NAME}' already exists.")
             return
-        
-        qdrant_client.create_payload_index(
-            collection_name=settings.qdrant_collection_name,
-            field_name="document_id",
-            field_schema=PayloadSchemaType.KEYWORD,
-        )
 
         qdrant_client.create_collection(
             collection_name=self.COLLECTION_NAME,
@@ -45,6 +39,12 @@ class QdrantService:
                 size=3072,
                 distance=Distance.COSINE,
             ),
+        )
+
+        qdrant_client.create_payload_index(
+            collection_name=settings.qdrant_collection_name,
+            field_name="document_id",
+            field_schema=PayloadSchemaType.KEYWORD,
         )
 
         print(f"Collection '{self.COLLECTION_NAME}' created.")
