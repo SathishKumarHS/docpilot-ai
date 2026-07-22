@@ -75,5 +75,14 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
+# Node / Web
+node_modules/
+web/node_modules/
+web/dist/
+
+# Go build artifacts
+feature-flag/feature-flag
+feature-flag/server
+
 # Application Uploads/Storage
 backend/uploads/*
