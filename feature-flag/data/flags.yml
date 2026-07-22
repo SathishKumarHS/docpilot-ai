@@ -1,0 +1,13 @@
+limits:
+  anonymous:
+    max-documents: 3
+    max-file-size-mb: 20
+    expiration-days: 1
+    max-questions-per-day: 50
+    max-pages: 200
+  registered:
+    max-documents: 20
+    max-file-size-mb: 50
+    expiration-days: 7
+    max-questions-per-day: 500
+    max-pages: 2000
