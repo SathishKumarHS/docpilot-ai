@@ -22,6 +22,22 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  feature-flag:
+    build: ./feature-flag
+    ports:
+      - "8090:8090"
+    restart: unless-stopped
+
   ai-worker:
     build: ./ai-worker
     ports:
@@ -43,11 +59,15 @@ services:
     environment:
       DATABASE_URL: jdbc:postgresql://postgres:5432/docpilot
       AI_WORKER_BASE_URL: http://ai-worker:8000
+      REDIS_HOST: redis
+      FEATURE_FLAG_SERVICE_URL: http://feature-flag:8090
     depends_on:
       postgres:
         condition: service_healthy
       ai-worker:
         condition: service_started
+      redis:
+        condition: service_healthy
 
 volumes:
   postgres-data:
