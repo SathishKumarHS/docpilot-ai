@@ -101,21 +101,28 @@ class QdrantService:
         self,
         embedding: list[float],
         client_id: str,
+        document_id: str | None = None,
         limit: int = 5,
     ):
         try:
+            conditions = [
+                FieldCondition(
+                    key="client_id",
+                    match=MatchValue(value=client_id),
+                )
+            ]
+            if document_id is not None:
+                conditions.append(
+                    FieldCondition(
+                        key="document_id",
+                        match=MatchValue(value=document_id),
+                    )
+                )
             response = qdrant_client.query_points(
                 collection_name=self.COLLECTION_NAME,
                 query=embedding,
                 limit=limit,
-                query_filter=Filter(
-                    must=[
-                        FieldCondition(
-                            key="client_id",
-                            match=MatchValue(value=client_id),
-                        )
-                    ]
-                ),
+                query_filter=Filter(must=conditions),
             )
         except Exception as e:
             raise VectorDatabaseError(f"Failed to search embeddings: {e}")

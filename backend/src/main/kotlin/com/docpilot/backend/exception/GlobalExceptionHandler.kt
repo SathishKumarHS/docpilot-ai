@@ -6,10 +6,12 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MissingRequestHeaderException
+import org.springframework.web.multipart.MultipartException
 import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.multipart.support.MissingServletRequestPartException
+import org.springframework.dao.DataIntegrityViolationException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -19,11 +21,13 @@ class GlobalExceptionHandler {
     fun handleUnsupportedDocumentType(
         ex: UnsupportedDocumentTypeException
     ): ResponseEntity<ErrorResponse> {
+        log.warn("Unsupported document type: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
             .body(ErrorResponse(
                 status = HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(),
-                message = ex.message ?: "Unsupported document type"
+                error = "Unsupported Media Type",
+                message = ex.message ?: "Only PDF files are supported"
             ))
     }
 
@@ -31,11 +35,13 @@ class GlobalExceptionHandler {
     fun handleUnsupportedDocumentSize(
         ex: UnsupportedDocumentSizeException
     ): ResponseEntity<ErrorResponse> {
+        log.warn("Unsupported document size: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.PAYLOAD_TOO_LARGE)
             .body(ErrorResponse(
                 status = HttpStatus.PAYLOAD_TOO_LARGE.value(),
-                message = ex.message ?: "Unsupported document size"
+                error = "Payload Too Large",
+                message = ex.message ?: "File size exceeds the maximum allowed limit"
             ))
     }
 
@@ -43,11 +49,13 @@ class GlobalExceptionHandler {
     fun handleAiWorkerError(
         ex: AiWorkerException
     ): ResponseEntity<ErrorResponse> {
+        log.error("AI worker error: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.BAD_GATEWAY)
             .body(ErrorResponse(
                 status = HttpStatus.BAD_GATEWAY.value(),
-                message = "AI service error: ${ex.message}"
+                error = "Bad Gateway",
+                message = ex.message ?: "AI service is unavailable"
             ))
     }
 
@@ -57,15 +65,40 @@ class GlobalExceptionHandler {
         MissingServletRequestParameterException::class,
         MissingServletRequestPartException::class,
         HttpMessageNotReadableException::class,
+        MultipartException::class,
     )
     fun handleBadRequest(
         ex: Exception
     ): ResponseEntity<ErrorResponse> {
+        log.warn("Bad request: {}: {}", ex.javaClass.simpleName, ex.message)
+        val message = when (ex) {
+            is MissingRequestHeaderException ->
+                "Missing required header: ${ex.headerName}"
+            is MultipartException ->
+                "File upload error: ${ex.message}"
+            else ->
+                ex.message ?: "Bad request"
+        }
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
             .body(ErrorResponse(
                 status = HttpStatus.BAD_REQUEST.value(),
-                message = ex.message ?: "Bad request"
+                error = "Bad Request",
+                message = message
+            ))
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException::class)
+    fun handleDataIntegrityViolation(
+        ex: DataIntegrityViolationException
+    ): ResponseEntity<ErrorResponse> {
+        log.error("Data integrity violation: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.UNPROCESSABLE_ENTITY)
+            .body(ErrorResponse(
+                status = HttpStatus.UNPROCESSABLE_ENTITY.value(),
+                error = "Unprocessable Entity",
+                message = "The submitted data contains invalid content"
             ))
     }
 
@@ -73,12 +106,13 @@ class GlobalExceptionHandler {
     fun handleGeneric(
         ex: Exception
     ): ResponseEntity<ErrorResponse> {
-        log.error("Unhandled exception", ex)
+        log.error("Unhandled {}: {}", ex.javaClass.simpleName, ex.message, ex)
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(ErrorResponse(
                 status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                message = "An unexpected error occurred"
+                error = "Internal Server Error",
+                message = ex.message ?: "An unexpected error occurred"
             ))
     }
 }

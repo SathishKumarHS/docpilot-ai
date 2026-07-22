@@ -45,6 +45,14 @@ kotlin {
     }
 }
 
+tasks.named<Jar>("bootJar") {
+    archiveFileName.set("backend.jar")
+}
+
+tasks.named<Jar>("jar") {
+    enabled = false
+}
+
 tasks.named<Test>("test") {
     useJUnitPlatform {
         excludeTags("e2e")

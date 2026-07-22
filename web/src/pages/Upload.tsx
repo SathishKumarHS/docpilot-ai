@@ -1,6 +1,6 @@
 import { useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { Upload as UploadIcon, FileText, ArrowLeft, Sparkles, Loader2 } from "lucide-react"
+import { Upload as UploadIcon, FileText, ArrowLeft, Sparkles, Loader2, Globe } from "lucide-react"
 import { getClientId } from "../lib/client-id"
 
 export default function UploadPage() {
@@ -8,11 +8,15 @@ export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null)
   const [isDragOver, setIsDragOver] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   function handleFilePick(f: File) {
+    setError(null)
     if (f.type === "application/pdf") {
       setFile(f)
+    } else {
+      setError("Please upload a PDF file.")
     }
   }
 
@@ -59,11 +63,12 @@ export default function UploadPage() {
         body: formData,
       })
 
-      if (!response.ok) {
-        throw new Error("Upload failed")
-      }
-
       const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.message || "Upload failed")
+        return
+      }
 
       navigate("/chat", {
         state: {
@@ -72,7 +77,7 @@ export default function UploadPage() {
         },
       })
     } catch {
-      alert("Failed to upload document. Please try again.")
+      setError("Failed to upload document. Please try again.")
     } finally {
       setIsUploading(false)
     }
@@ -94,12 +99,26 @@ export default function UploadPage() {
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-1">
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
           <span className="font-semibold text-lg">DocPilot AI</span>
         </div>
+        <button
+          onClick={() => navigate("/documents")}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium hover:bg-secondary transition-colors"
+        >
+          <FileText className="h-4 w-4" />
+          My Documents
+        </button>
+        <button
+          onClick={() => navigate("/chat")}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-500/10 px-3 py-1.5 text-sm font-medium text-indigo-500 hover:bg-indigo-500/20 transition-colors"
+        >
+          <Globe className="h-4 w-4" />
+          Global Chat
+        </button>
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center p-6">
@@ -174,6 +193,20 @@ export default function UploadPage() {
             )}
             {isUploading ? "Uploading..." : "Analyze Document"}
           </button>
+
+          {error && (
+            <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+              <p className="text-sm text-destructive">{error}</p>
+              {error.toLowerCase().includes("limit") && (
+                <button
+                  onClick={() => navigate("/documents")}
+                  className="mt-2 text-sm font-medium text-destructive underline underline-offset-2 hover:text-destructive/80"
+                >
+                  Manage your documents to free up space
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </main>
     </div>

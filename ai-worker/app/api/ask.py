@@ -14,6 +14,10 @@ def ask(
     request: AskRequest,
     x_client_id: str = Header(...),
 ):
-    answer = ask_service.ask(request.question, x_client_id)
+    answer = ask_service.ask(
+        question=request.question,
+        client_id=x_client_id,
+        document_id=request.document_id,
+    )
 
     return AskResponse(answer=answer)

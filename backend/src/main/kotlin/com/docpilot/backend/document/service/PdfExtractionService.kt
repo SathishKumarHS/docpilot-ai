@@ -14,6 +14,9 @@ class PdfExtractionService {
             Loader.loadPDF(inputStream.readBytes()).use { document ->
                 val stripper = PDFTextStripper()
                 return stripper.getText(document).trim()
+                    // strip null bytes and control chars that PostgreSQL rejects in UTF-8 text columns
+                    .replace("\u0000", "")
+                    .replace(Regex("[\\u0001-\\u0008\\u000B\\u000C\\u000E-\\u001F\\uFFFE\\uFFFF]"), "")
             }
         }
     }

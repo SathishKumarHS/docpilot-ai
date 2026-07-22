@@ -1,10 +1,4 @@
-.PHONY: docker-up docker-down run-docpilot-ai web-run web-install build tidy test-feature-flag e2e-test-feature-flag e2e-test-backend e2e-test clean
-
-docker-up:
-	docker-compose up -d
-
-docker-down:
-	docker-compose down
+.PHONY: docker-up docker-down run-docpilot-ai web-run web-install build build-backend tidy test-feature-flag e2e-test-feature-flag e2e-test-backend e2e-test clean
 
 web-install:
 	cd web && npm install
@@ -19,8 +13,17 @@ web-run: web-install
 build:
 	cd feature-flag && go build -o feature-flag .
 
+build-backend:
+	cd backend && ./gradlew bootJar
+
 tidy:
 	cd feature-flag && go mod tidy
+
+docker-up: build build-backend
+	docker-compose up -d --build
+
+docker-down:
+	docker-compose down
 
 test-feature-flag:
 	cd feature-flag && go test -v ./...
