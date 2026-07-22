@@ -1,6 +1,7 @@
 package com.docpilot.backend.exception
 
 import com.docpilot.backend.aiworker.exception.AiWorkerException
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -12,6 +13,7 @@ import org.springframework.web.multipart.support.MissingServletRequestPartExcept
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
+    private val log = LoggerFactory.getLogger(javaClass)
 
     @ExceptionHandler(UnsupportedDocumentTypeException::class)
     fun handleUnsupportedDocumentType(
@@ -71,6 +73,7 @@ class GlobalExceptionHandler {
     fun handleGeneric(
         ex: Exception
     ): ResponseEntity<ErrorResponse> {
+        log.error("Unhandled exception", ex)
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(ErrorResponse(

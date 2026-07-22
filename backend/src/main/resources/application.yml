@@ -7,8 +7,23 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-
     show-sql: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
 ai-worker:
   base-url: ${AI_WORKER_BASE_URL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,env
+
+feature-flags:
+  refresh-interval-ms: 300000
+  service-url: ${FEATURE_FLAG_SERVICE_URL:http://localhost:8090}
+  redis-key: "feature:flags"

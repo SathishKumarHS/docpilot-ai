@@ -36,6 +36,7 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation("org.apache.pdfbox:pdfbox:3.0.2")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
 }
 
 kotlin {
@@ -44,6 +45,23 @@ kotlin {
     }
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
+tasks.named<Test>("test") {
+    useJUnitPlatform {
+        excludeTags("e2e")
+    }
+}
+
+tasks.register<Test>("e2eTest") {
+    useJUnitPlatform {
+        includeTags("e2e")
+    }
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+    shouldRunAfter(tasks.test)
+
+    testLogging {
+        events("passed", "failed", "skipped")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showStandardStreams = true
+    }
 }

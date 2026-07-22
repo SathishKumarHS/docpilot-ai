@@ -12,6 +12,9 @@ import com.docpilot.backend.document.entity.DocumentEntity
 import com.docpilot.backend.document.model.Document
 import com.docpilot.backend.document.repository.DocumentChunkRepository
 import com.docpilot.backend.document.repository.DocumentRepository
+import com.docpilot.backend.featureflag.service.FeatureFlagService
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -20,21 +23,25 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @Service
-class DocumentService (
+class DocumentService(
     private val validationService: DocumentValidationService,
     private val localStorageService: LocalStorageService,
     private val pdfExtractionService: PdfExtractionService,
     private val documentChunkingService: DocumentChunkingService,
     private val documentRepository: DocumentRepository,
     private val documentChunkRepository: DocumentChunkRepository,
-    private val aiWorkerClient: AiWorkerClient
-
+    private val aiWorkerClient: AiWorkerClient,
+    private val featureFlagService: FeatureFlagService,
 ) {
-
     @Transactional
     fun upload(file: MultipartFile, owner: OwnerContext): UploadDocumentResponse {
+        validationService.validate(file, owner.ownerType)
 
-        validationService.validate(file)
+        val limits = featureFlagService.getTierLimits(owner.ownerType.name.lowercase())
+        val docCount = documentRepository.countByOwnerTypeAndOwnerId(owner.ownerType, owner.ownerId)
+        if (docCount >= limits.maxDocuments) {
+            throw IllegalArgumentException("Document limit reached: max ${limits.maxDocuments} documents")
+        }
 
         localStorageService.save(file)
 
@@ -43,15 +50,6 @@ class DocumentService (
             fileName = file.originalFilename ?: "unknown",
             uploadedAt = Instant.now()
         )
-
-        val existingDocument = documentRepository.findByOwnerTypeAndOwnerId(
-            owner.ownerType,
-            owner.ownerId
-        )
-
-        if (existingDocument != null) {
-            deleteDocument(existingDocument)
-        }
 
         val content = pdfExtractionService.extractText(file)
 
@@ -64,14 +62,9 @@ class DocumentService (
             uploadedAt = document.uploadedAt,
             ownerType = owner.ownerType,
             ownerId = owner.ownerId,
-            expiresAt = when (owner.ownerType) {
-                OwnerType.ANONYMOUS -> Instant.now().plus(1, ChronoUnit.DAYS)
-                OwnerType.USER -> Instant.now().plus(7, ChronoUnit.DAYS)
-            }
+            expiresAt = Instant.now().plus(limits.expirationDays.toLong(), ChronoUnit.DAYS)
         )
-        documentRepository.save(
-            documentEntity
-        )
+        documentRepository.save(documentEntity)
 
         val entities = chunks.map {
             DocumentChunkEntity(
@@ -81,23 +74,17 @@ class DocumentService (
                 document = documentEntity
             )
         }
-
         documentChunkRepository.saveAll(entities)
 
-        val request = IndexDocumentRequest(
-            documentId = document.id,
-            chunks = chunks.map {
-                ChunkRequest(
-                    chunkId = it.id,
-                    chunkIndex = it.chunkIndex,
-                    text = it.content,
-                )
-            }
+        aiWorkerClient.indexDocument(
+            IndexDocumentRequest(
+                documentId = document.id,
+                chunks = chunks.map {
+                    ChunkRequest(chunkId = it.id, chunkIndex = it.chunkIndex, text = it.content)
+                }
+            ),
+            owner.ownerId
         )
-
-        aiWorkerClient.indexDocument(request, owner.ownerId)
-
-
 
         return UploadDocumentResponse(
             id = document.id,
@@ -107,28 +94,28 @@ class DocumentService (
         )
     }
 
-    fun getAllDocuments(): List<DocumentResponse> {
-        return documentRepository.findAll()
+    fun getAllDocuments(owner: OwnerContext, pageable: Pageable): Page<DocumentResponse> {
+        return documentRepository
+            .findByOwnerTypeAndOwnerId(owner.ownerType, owner.ownerId, pageable)
             .map {
-                DocumentResponse(
-                    id = it.id,
-                    fileName = it.fileName,
-                    size = it.size,
-                    uploadedAt = it.uploadedAt
-                )
+                DocumentResponse(id = it.id, fileName = it.fileName, size = it.size, uploadedAt = it.uploadedAt)
             }
     }
 
     @Transactional
-    fun deleteDocument(document: DocumentEntity) {
-        // Step 1: Delete vectors
+    fun deleteDocument(documentId: UUID, owner: OwnerContext) {
+        val document = documentRepository.findByIdAndOwnerTypeAndOwnerId(documentId, owner.ownerType, owner.ownerId)
+            ?: throw IllegalArgumentException("Document not found")
+
         aiWorkerClient.deleteDocument(document.id, document.ownerId)
-
-        // Step 2: Delete chunks
         documentChunkRepository.deleteByDocumentId(document.id)
-
-        // Step 3: Delete document
         documentRepository.delete(document)
     }
 
+    @Transactional
+    fun deleteDocument(document: DocumentEntity) {
+        aiWorkerClient.deleteDocument(document.id, document.ownerId)
+        documentChunkRepository.deleteByDocumentId(document.id)
+        documentRepository.delete(document)
+    }
 }

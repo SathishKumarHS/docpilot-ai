@@ -5,7 +5,7 @@ limits:
     expiration-days: 1
     max-questions-per-day: 50
     max-pages: 200
-  registered:
+  user:
     max-documents: 20
     max-file-size-mb: 50
     expiration-days: 7
