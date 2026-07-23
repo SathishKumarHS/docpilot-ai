@@ -37,6 +37,21 @@ docpilot:
   cleanup:
     cron: "0 0 * * * *" # every hour
 
+  ratelimit:
+    limits:
+      "POST:/api/v1/ask":
+        capacity: 5
+        period: 1m
+      "POST:/api/v1/documents":
+        capacity: 3
+        period: 1m
+      "GET:/api/v1/documents/**":
+        capacity: 20
+        period: 1m
+      "DELETE:/api/v1/documents/**":
+        capacity: 5
+        period: 1m
+
 minio:
   url: ${MINIO_URL:http://localhost:9000}
   access-key: ${MINIO_ACCESS_KEY:minioadmin}
