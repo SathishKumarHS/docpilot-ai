@@ -3,6 +3,9 @@ package com.docpilot.backend.ask.controller
 import com.docpilot.backend.aiworker.client.AiWorkerClient
 import com.docpilot.backend.ask.dto.AskRequest
 import com.docpilot.backend.ask.dto.AskResponse
+import com.docpilot.backend.ask.service.QuestionLimitService
+import com.docpilot.backend.auth.resolver.OwnerResolver
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
@@ -13,14 +16,20 @@ import java.util.UUID
 @RestController
 @RequestMapping("/api/v1/ask")
 class Ask(
-    private val aiWorkerClient: AiWorkerClient
+    private val aiWorkerClient: AiWorkerClient,
+    private val ownerResolver: OwnerResolver,
+    private val questionLimitService: QuestionLimitService,
 ) {
 
     @PostMapping
     fun ask(
-        @RequestBody request: AskRequest,
+        request: HttpServletRequest,
+        @RequestBody askRequest: AskRequest,
         @RequestHeader("X-Client-Id") clientId: UUID,
     ): AskResponse {
-        return aiWorkerClient.ask(request, clientId)
+        val owner = ownerResolver.resolve(request)
+        val tier = owner.ownerType.name.lowercase()
+        questionLimitService.checkAndIncrement(clientId, tier)
+        return aiWorkerClient.ask(askRequest, clientId)
     }
 }
