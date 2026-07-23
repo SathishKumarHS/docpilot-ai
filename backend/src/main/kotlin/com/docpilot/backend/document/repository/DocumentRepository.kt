@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
+import java.time.Instant
 import java.util.UUID
 
 @Repository
@@ -14,4 +15,5 @@ interface DocumentRepository : JpaRepository<DocumentEntity, UUID> {
     fun countByOwnerTypeAndOwnerId(ownerType: OwnerType, ownerId: UUID): Long
     fun findByIdAndOwnerTypeAndOwnerId(id: UUID, ownerType: OwnerType, ownerId: UUID): DocumentEntity?
     fun findByOwnerTypeAndOwnerId(ownerType: OwnerType, ownerId: UUID, pageable: Pageable): Page<DocumentEntity>
+    fun findAllByExpiresAtBefore(expiresAt: Instant): List<DocumentEntity>
 }

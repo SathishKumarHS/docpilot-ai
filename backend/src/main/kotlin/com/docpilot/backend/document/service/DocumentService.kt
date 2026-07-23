@@ -13,6 +13,7 @@ import com.docpilot.backend.document.model.Document
 import com.docpilot.backend.document.repository.DocumentChunkRepository
 import com.docpilot.backend.document.repository.DocumentRepository
 import com.docpilot.backend.featureflag.service.FeatureFlagService
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -33,6 +34,7 @@ class DocumentService(
     private val aiWorkerClient: AiWorkerClient,
     private val featureFlagService: FeatureFlagService,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
     @Transactional
     fun upload(file: MultipartFile, owner: OwnerContext): UploadDocumentResponse {
         validationService.validate(file, owner.ownerType)
@@ -117,5 +119,23 @@ class DocumentService(
         aiWorkerClient.deleteDocument(document.id, document.ownerId)
         documentChunkRepository.deleteByDocumentId(document.id)
         documentRepository.delete(document)
+    }
+
+    @Transactional
+    fun cleanupExpiredDocuments() {
+        val expired = documentRepository.findAllByExpiresAtBefore(Instant.now())
+        if (expired.isEmpty()) return
+
+        log.info("Cleaning up {} expired documents", expired.size)
+        expired.forEach { document ->
+            try {
+                aiWorkerClient.deleteDocument(document.id, document.ownerId)
+                documentChunkRepository.deleteByDocumentId(document.id)
+                documentRepository.delete(document)
+                log.info("Cleaned up document {}", document.id)
+            } catch (e: Exception) {
+                log.error("Failed to clean up document {}", document.id, e)
+            }
+        }
     }
 }
