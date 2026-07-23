@@ -22,6 +22,4 @@ class DocumentEntity(
     val ownerId : UUID,
 
     val ownerType : OwnerType,
-
-    var expiresAt: Instant?,
 )

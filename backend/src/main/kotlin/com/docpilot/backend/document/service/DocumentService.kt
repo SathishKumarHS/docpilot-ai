@@ -63,8 +63,7 @@ class DocumentService(
             size = file.size,
             uploadedAt = document.uploadedAt,
             ownerType = owner.ownerType,
-            ownerId = owner.ownerId,
-            expiresAt = Instant.now().plus(limits.expirationDays.toLong(), ChronoUnit.DAYS)
+            ownerId = owner.ownerId
         )
         documentRepository.save(documentEntity)
 
@@ -123,16 +122,23 @@ class DocumentService(
 
     @Transactional
     fun cleanupExpiredDocuments() {
-        val expired = documentRepository.findAllByExpiresAtBefore(Instant.now())
-        if (expired.isEmpty()) return
+        val minLifetime = 1
+        val threshold = Instant.now().minus(minLifetime.toLong(), ChronoUnit.DAYS)
+        val candidates = documentRepository.findAllByUploadedAtBefore(threshold)
+        if (candidates.isEmpty()) return
 
-        log.info("Cleaning up {} expired documents", expired.size)
-        expired.forEach { document ->
+        log.info("Checking {} documents for expiry", candidates.size)
+        candidates.forEach { document ->
             try {
+                val tier = document.ownerType.name.lowercase()
+                val limits = featureFlagService.getTierLimits(tier)
+                val expiredAt = document.uploadedAt.plus(limits.expirationDays.toLong(), ChronoUnit.DAYS)
+                if (Instant.now().isBefore(expiredAt)) return@forEach
+
                 aiWorkerClient.deleteDocument(document.id, document.ownerId)
                 documentChunkRepository.deleteByDocumentId(document.id)
                 documentRepository.delete(document)
-                log.info("Cleaned up document {}", document.id)
+                log.info("Cleaned up expired document {}", document.id)
             } catch (e: Exception) {
                 log.error("Failed to clean up document {}", document.id, e)
             }
