@@ -86,3 +86,4 @@ feature-flag/server
 
 # Application Uploads/Storage
 backend/uploads/*
+minio-data/

@@ -22,4 +22,6 @@ class DocumentEntity(
     val ownerId : UUID,
 
     val ownerType : OwnerType,
+
+    var storageKey: String? = null,
 )

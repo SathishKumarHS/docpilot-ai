@@ -38,5 +38,4 @@ e2e-test: e2e-test-feature-flag e2e-test-backend
 
 clean:
 	docker-compose down --volumes --remove-orphans
-	rm -rf uploads
 	rm -f feature-flag/feature-flag

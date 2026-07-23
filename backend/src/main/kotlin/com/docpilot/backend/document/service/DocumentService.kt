@@ -12,6 +12,7 @@ import com.docpilot.backend.document.entity.DocumentEntity
 import com.docpilot.backend.document.model.Document
 import com.docpilot.backend.document.repository.DocumentChunkRepository
 import com.docpilot.backend.document.repository.DocumentRepository
+import com.docpilot.backend.document.storage.MinioService
 import com.docpilot.backend.featureflag.service.FeatureFlagService
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
@@ -26,7 +27,7 @@ import java.util.UUID
 @Service
 class DocumentService(
     private val validationService: DocumentValidationService,
-    private val localStorageService: LocalStorageService,
+    private val minioService: MinioService,
     private val pdfExtractionService: PdfExtractionService,
     private val documentChunkingService: DocumentChunkingService,
     private val documentRepository: DocumentRepository,
@@ -45,13 +46,13 @@ class DocumentService(
             throw IllegalArgumentException("Document limit reached: max ${limits.maxDocuments} documents")
         }
 
-        localStorageService.save(file)
-
         val document = Document(
             id = UUID.randomUUID(),
             fileName = file.originalFilename ?: "unknown",
             uploadedAt = Instant.now()
         )
+
+        val storageKey = minioService.save(file, document.id)
 
         val content = pdfExtractionService.extractText(file)
 
@@ -63,7 +64,8 @@ class DocumentService(
             size = file.size,
             uploadedAt = document.uploadedAt,
             ownerType = owner.ownerType,
-            ownerId = owner.ownerId
+            ownerId = owner.ownerId,
+            storageKey = storageKey,
         )
         documentRepository.save(documentEntity)
 
@@ -109,6 +111,7 @@ class DocumentService(
             ?: throw IllegalArgumentException("Document not found")
 
         aiWorkerClient.deleteDocument(document.id, document.ownerId)
+        document.storageKey?.let { minioService.delete(it) }
         documentChunkRepository.deleteByDocumentId(document.id)
         documentRepository.delete(document)
     }
@@ -116,6 +119,7 @@ class DocumentService(
     @Transactional
     fun deleteDocument(document: DocumentEntity) {
         aiWorkerClient.deleteDocument(document.id, document.ownerId)
+        document.storageKey?.let { minioService.delete(it) }
         documentChunkRepository.deleteByDocumentId(document.id)
         documentRepository.delete(document)
     }
@@ -136,6 +140,7 @@ class DocumentService(
                 if (Instant.now().isBefore(expiredAt)) return@forEach
 
                 aiWorkerClient.deleteDocument(document.id, document.ownerId)
+                document.storageKey?.let { minioService.delete(it) }
                 documentChunkRepository.deleteByDocumentId(document.id)
                 documentRepository.delete(document)
                 log.info("Cleaned up expired document {}", document.id)

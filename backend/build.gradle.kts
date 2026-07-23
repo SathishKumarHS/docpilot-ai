@@ -37,6 +37,7 @@ dependencies {
     implementation("org.apache.pdfbox:pdfbox:3.0.2")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("io.minio:minio:8.5.17")
 }
 
 kotlin {
