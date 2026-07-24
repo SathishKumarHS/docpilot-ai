@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { ArrowLeft, FileText, MessageCircle, Trash2, Sparkles, Loader2, Globe, Upload } from "lucide-react"
 import { apiFetch, getAccessToken, getAnonymousToken } from "../lib/auth"
@@ -16,12 +16,15 @@ export default function Documents() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const fetched = useRef(false)
 
   useEffect(() => {
     if (!getAccessToken() && !getAnonymousToken()) {
       navigate("/", { replace: true })
       return
     }
+    if (fetched.current) return
+    fetched.current = true
     fetchDocuments()
   }, [navigate])
 
@@ -56,16 +59,14 @@ export default function Documents() {
   }
 
   function handleChat(doc: Document) {
-    navigate("/chat", {
-      state: { documentId: doc.id, fileName: doc.fileName },
-    })
+    navigate(`/chat?documentId=${encodeURIComponent(doc.id)}&fileName=${encodeURIComponent(doc.fileName)}`)
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-primary/5">
       <header className="flex items-center gap-3 px-6 py-4 border-b border-border">
         <button
-          onClick={() => navigate("/upload")}
+          onClick={() => navigate("/")}
           className="p-2 rounded-xl hover:bg-secondary transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -106,7 +107,7 @@ export default function Documents() {
               Upload a PDF to get started
             </p>
             <button
-          onClick={() => navigate("/")}
+              onClick={() => navigate("/upload")}
               className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
               Upload Document

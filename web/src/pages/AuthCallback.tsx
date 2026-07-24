@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { saveAuth, apiFetch } from "../lib/auth"
+import { saveAuth, apiFetch, getAnonymousToken } from "../lib/auth"
 import { Sparkles, Loader2 } from "lucide-react"
 
 export default function AuthCallback() {
@@ -18,19 +18,27 @@ export default function AuthCallback() {
       return
     }
 
-    fetch("/api/v1/auth/exchange", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code }),
-    })
-      .then(async (res) => {
+    ;(async () => {
+      try {
+        const res = await fetch("/api/v1/auth/exchange", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        })
         if (!res.ok) throw new Error("Authentication failed")
         const data = await res.json()
         saveAuth(data.accessToken, data.refreshToken, data.userId, data.email, data.role)
-        return apiFetch("/api/v1/auth/claim", { method: "POST" })
-      })
-      .catch(() => setError("Authentication failed"))
-      .finally(() => navigate("/", { replace: true }))
+
+        if (getAnonymousToken()) {
+          await apiFetch("/api/v1/auth/claim", { method: "POST" })
+        }
+
+        navigate("/", { replace: true })
+      } catch {
+        setStatus("error")
+        setError("Authentication failed")
+      }
+    })()
   }, [searchParams, navigate])
 
   return (

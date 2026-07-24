@@ -25,8 +25,9 @@ function App() {
 
 function ChatWrapper() {
   const location = useLocation()
-  const state = location.state as { documentId?: string } | null
-  return <Chat key={state?.documentId ?? "global"} />
+  const params = new URLSearchParams(location.search)
+  const documentId = params.get("documentId") ?? (location.state as { documentId?: string } | null)?.documentId ?? null
+  return <Chat key={documentId ?? "global"} documentId={documentId} />
 }
 
 export default App

@@ -9,20 +9,27 @@ interface ChatMessage {
   content: string
 }
 
-export default function Chat() {
+interface ChatProps {
+  documentId?: string | null
+}
+
+export default function Chat({ documentId: propDocumentId }: ChatProps) {
   const navigate = useNavigate()
   const location = useLocation()
+  const checkedAuth = useRef(false)
 
   useEffect(() => {
+    if (checkedAuth.current) return
+    checkedAuth.current = true
     if (!getAccessToken() && !getAnonymousToken()) {
       navigate("/", { replace: true })
     }
   }, [navigate])
 
-  const state = location.state as { documentId?: string; fileName?: string } | null
-  const isGlobal = !state?.documentId
-  const fileName = state?.fileName ?? "document.pdf"
-  const documentId = state?.documentId ?? null
+  const params = new URLSearchParams(location.search)
+  const documentId = propDocumentId ?? params.get("documentId") ?? null
+  const isGlobal = !documentId
+  const fileName = params.get("fileName") ?? (location.state as { fileName?: string } | null)?.fileName ?? "document.pdf"
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {

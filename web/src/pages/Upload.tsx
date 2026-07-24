@@ -6,8 +6,11 @@ import AuthControls from "../components/AuthControls"
 
 export default function UploadPage() {
   const navigate = useNavigate()
+  const checkedAuth = useRef(false)
 
   useEffect(() => {
+    if (checkedAuth.current) return
+    checkedAuth.current = true
     if (!getAccessToken() && !getAnonymousToken()) {
       navigate("/", { replace: true })
     }
@@ -74,12 +77,7 @@ export default function UploadPage() {
         return
       }
 
-      navigate("/chat", {
-        state: {
-          documentId: data.id,
-          fileName: data.fileName,
-        },
-      })
+      navigate(`/chat?documentId=${encodeURIComponent(data.id)}&fileName=${encodeURIComponent(data.fileName)}`)
     } catch {
       setError("Failed to upload document. Please try again.")
     } finally {
