@@ -8,10 +8,8 @@ import com.docpilot.backend.auth.resolver.OwnerResolver
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import java.util.UUID
 
 @RestController
 @RequestMapping("/api/v1/ask")
@@ -25,11 +23,10 @@ class Ask(
     fun ask(
         request: HttpServletRequest,
         @RequestBody askRequest: AskRequest,
-        @RequestHeader("X-Client-Id") clientId: UUID,
     ): AskResponse {
         val owner = ownerResolver.resolve(request)
         val tier = owner.ownerType.name.lowercase()
-        questionLimitService.checkAndIncrement(clientId, tier)
-        return aiWorkerClient.ask(askRequest, clientId)
+        questionLimitService.checkAndIncrement(owner.ownerId, tier)
+        return aiWorkerClient.ask(askRequest, owner.ownerId)
     }
 }

@@ -33,6 +33,7 @@ class FeatureFlagE2ETest {
     @BeforeEach
     fun setup() {
         web = WebTestClient.bindToServer().baseUrl("http://localhost:$port").build()
+        redis.delete("feature:flags")
     }
 
     @Test
