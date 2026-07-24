@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	pb "github.com/docpilot/feature-flag/proto"
+	pb "github.com/docpilot/feature-flag/grpc"
 )
 
 type GrpcFlagsHandler struct {

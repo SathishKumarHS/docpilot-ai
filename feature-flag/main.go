@@ -9,7 +9,7 @@ import (
 	"github.com/docpilot/feature-flag/config"
 	"github.com/docpilot/feature-flag/handler"
 	"github.com/docpilot/feature-flag/middleware"
-	pb "github.com/docpilot/feature-flag/proto"
+	pb "github.com/docpilot/feature-flag/grpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )

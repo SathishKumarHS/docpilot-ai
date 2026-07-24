@@ -4,7 +4,7 @@
 // - protoc             v7.34.1
 // source: featureflag.proto
 
-package proto
+package grpc
 
 import (
 	context "context"

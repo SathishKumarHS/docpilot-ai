@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package featureflag;
 
-option go_package = "github.com/docpilot/feature-flag/proto";
+option go_package = "github.com/docpilot/feature-flag/grpc";
 
 service FeatureFlagService {
   rpc GetFlags(GetFlagsRequest) returns (GetFlagsResponse);

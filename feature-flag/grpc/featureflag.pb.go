@@ -4,7 +4,7 @@
 // 	protoc        v7.34.1
 // source: featureflag.proto
 
-package proto
+package grpc
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -114,7 +114,7 @@ const file_featureflag_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012]\n" +
 	"\x12FeatureFlagService\x12G\n" +
-	"\bGetFlags\x12\x1c.featureflag.GetFlagsRequest\x1a\x1d.featureflag.GetFlagsResponseB(Z&github.com/docpilot/feature-flag/protob\x06proto3"
+	"\bGetFlags\x12\x1c.featureflag.GetFlagsRequest\x1a\x1d.featureflag.GetFlagsResponseB'Z%github.com/docpilot/feature-flag/grpcb\x06proto3"
 
 var (
 	file_featureflag_proto_rawDescOnce sync.Once

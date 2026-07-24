@@ -36,7 +36,6 @@ dependencies {
     implementation("org.postgresql:postgresql")
     implementation(kotlin("stdlib"))
     implementation("org.apache.pdfbox:pdfbox:3.0.2")
-    implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("io.minio:minio:8.5.17")
     implementation("com.bucket4j:bucket4j-core:8.7.0")
@@ -49,7 +48,6 @@ dependencies {
     implementation("io.grpc:grpc-netty-shaded")
     implementation("io.grpc:grpc-protobuf")
     implementation("io.grpc:grpc-stub")
-    implementation("javax.annotation:javax.annotation-api:1.3.2")
     implementation("io.grpc:grpc-kotlin-stub")
 }
 
@@ -60,6 +58,13 @@ protobuf {
     plugins {
         create("grpckt") {
             artifact = "io.grpc:protoc-gen-grpc-kotlin:1.5.0:jdk8@jar"
+        }
+    }
+    sourceSets {
+        main {
+            proto {
+                srcDir("../shared/proto")
+            }
         }
     }
     generateProtoTasks {

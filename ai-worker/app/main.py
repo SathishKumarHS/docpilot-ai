@@ -1,3 +1,6 @@
+import asyncio
+from os import environ
+
 from fastapi import FastAPI
 
 from app.api.embedding import router as embedding_router
@@ -11,8 +14,11 @@ from contextlib import asynccontextmanager
 
 from app.exceptions import AiWorkerError
 from app.error_handler import ai_worker_error_handler
+from app.grpc.service import serve_grpc
 from app.middleware.auth import ServiceKeyMiddleware
 from app.services.qdrant_service import qdrant_service
+
+GRPC_PORT = int(environ.get("GRPC_PORT", "50051"))
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -20,8 +26,11 @@ async def lifespan(app: FastAPI):
 
     qdrant_service.create_collection()
 
+    grpc_task = asyncio.create_task(serve_grpc(GRPC_PORT))
+
     yield
 
+    grpc_task.cancel()
     print("Stopping AI Worker...")
 
 app = FastAPI(

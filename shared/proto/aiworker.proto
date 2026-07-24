@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package aiworker;
+
+service AiWorkerService {
+  rpc IndexDocument(IndexDocumentRequest) returns (IndexDocumentResponse);
+  rpc Ask(AskRequest) returns (AskResponse);
+  rpc DeleteDocument(DeleteDocumentRequest) returns (DeleteDocumentResponse);
+}
+
+message IndexDocumentRequest {
+  string document_id = 1;
+  repeated Chunk chunks = 2;
+}
+
+message Chunk {
+  string chunk_id = 1;
+  int32 chunk_index = 2;
+  string text = 3;
+}
+
+message IndexDocumentResponse {
+  int32 indexed_chunks = 1;
+}
+
+message AskRequest {
+  string question = 1;
+  optional string document_id = 2;
+}
+
+message AskResponse {
+  string answer = 1;
+}
+
+message DeleteDocumentRequest {
+  string document_id = 1;
+}
+
+message DeleteDocumentResponse {
+  bool deleted = 1;
+}

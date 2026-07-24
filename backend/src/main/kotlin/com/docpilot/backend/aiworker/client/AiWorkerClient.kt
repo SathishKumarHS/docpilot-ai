@@ -1,75 +1,111 @@
 package com.docpilot.backend.aiworker.client
 
+import aiworker.AiWorkerServiceGrpc
+import aiworker.Aiworker
+import com.docpilot.backend.ask.dto.AskRequest
+import com.docpilot.backend.ask.dto.AskResponse
+import com.docpilot.backend.aiworker.dto.ChunkRequest
 import com.docpilot.backend.aiworker.dto.IndexDocumentRequest
 import com.docpilot.backend.aiworker.dto.IndexDocumentResponse
 import com.docpilot.backend.aiworker.exception.AiWorkerException
-import com.docpilot.backend.ask.dto.AskRequest
-import com.docpilot.backend.ask.dto.AskResponse
+import com.docpilot.backend.config.AiWorkerProperties
+import com.docpilot.backend.featureflag.client.MetadataInterceptor
+import io.grpc.ManagedChannelBuilder
+import io.grpc.StatusRuntimeException
+import jakarta.annotation.PreDestroy
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.function.client.WebClient
-import reactor.core.publisher.Mono
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 @Component
 class AiWorkerClient(
-    private val aiWorkerWebClient: WebClient,
+    private val properties: AiWorkerProperties,
+    @Value("\${SERVICE_API_KEY}") serviceApiKey: String,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
+
+    private val channel = ManagedChannelBuilder
+        .forTarget(properties.serviceUrl)
+        .usePlaintext()
+        .build()
+
+    private val stub = AiWorkerServiceGrpc.newBlockingStub(channel)
+        .withInterceptors(
+            MetadataInterceptor("x-service-key", serviceApiKey),
+        )
 
     fun indexDocument(
         request: IndexDocumentRequest,
         clientId: UUID,
     ): IndexDocumentResponse {
-        return aiWorkerWebClient
-            .post()
-            .uri("/documents/index")
-            .header("X-Client-Id", clientId.toString())
-            .bodyValue(request)
-            .retrieve()
-            .onStatus({ it.isError }) { response ->
-                response.bodyToMono(String::class.java)
-                    .flatMap { body ->
-                        log.error("AI Worker error: {}", body)
-                        Mono.error(AiWorkerException(body))
-                    }
-            }
-            .bodyToMono(IndexDocumentResponse::class.java)
-            .block()
-            ?: throw AiWorkerException("AI Worker returned an empty response.")
+        return try {
+            val protoRequest = Aiworker.IndexDocumentRequest.newBuilder()
+                .setDocumentId(request.documentId.toString())
+                .addAllChunks(request.chunks.map { it.toProto() })
+                .build()
+
+            val response = stub.withInterceptors(
+                MetadataInterceptor("x-client-id", clientId.toString()),
+            ).indexDocument(protoRequest)
+
+            IndexDocumentResponse(indexedChunks = response.indexedChunks)
+        } catch (e: StatusRuntimeException) {
+            log.error("AI Worker gRPC error: {}", e.status.description)
+            throw AiWorkerException(e.status.description ?: "Unknown gRPC error", e)
+        }
     }
 
     fun ask(
         request: AskRequest,
         clientId: UUID,
     ): AskResponse {
-        return aiWorkerWebClient
-            .post()
-            .uri("/ask")
-            .header("X-Client-Id", clientId.toString())
-            .bodyValue(request)
-            .retrieve()
-            .onStatus({ it.isError }) { response ->
-                response.bodyToMono(String::class.java)
-                    .flatMap { body ->
-                        log.error("AI Worker error: {}", body)
-                        Mono.error(AiWorkerException(body))
-                    }
-            }
-            .bodyToMono(AskResponse::class.java)
-            .block()
-            ?: throw AiWorkerException("AI Worker returned an empty response.")
+        return try {
+            val protoRequest = Aiworker.AskRequest.newBuilder()
+                .setQuestion(request.question)
+                .apply { request.documentId?.let { setDocumentId(it.toString()) } }
+                .build()
+
+            val response = stub.withInterceptors(
+                MetadataInterceptor("x-client-id", clientId.toString()),
+            ).ask(protoRequest)
+
+            AskResponse(answer = response.answer)
+        } catch (e: StatusRuntimeException) {
+            log.error("AI Worker gRPC error: {}", e.status.description)
+            throw AiWorkerException(e.status.description ?: "Unknown gRPC error", e)
+        }
     }
 
     fun deleteDocument(
         documentId: UUID,
         clientId: UUID,
     ) {
-        aiWorkerWebClient.delete()
-            .uri("/documents/{documentId}", documentId)
-            .header("X-Client-Id", clientId.toString())
-            .retrieve()
-            .toBodilessEntity()
-            .block()
+        try {
+            val protoRequest = Aiworker.DeleteDocumentRequest.newBuilder()
+                .setDocumentId(documentId.toString())
+                .build()
+
+            stub.withInterceptors(
+                MetadataInterceptor("x-client-id", clientId.toString()),
+            ).deleteDocument(protoRequest)
+        } catch (e: StatusRuntimeException) {
+            log.error("AI Worker gRPC error: {}", e.status.description)
+            throw AiWorkerException(e.status.description ?: "Unknown gRPC error", e)
+        }
     }
+
+    @PreDestroy
+    fun shutdown() {
+        channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
+    }
+}
+
+private fun ChunkRequest.toProto(): Aiworker.Chunk {
+    return Aiworker.Chunk.newBuilder()
+        .setChunkId(chunkId.toString())
+        .setChunkIndex(chunkIndex)
+        .setText(text)
+        .build()
 }

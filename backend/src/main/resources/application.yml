@@ -30,7 +30,7 @@ spring:
       password: ${REDIS_PASSWORD:}
 
 ai-worker:
-  base-url: ${AI_WORKER_BASE_URL}
+  service-url: ${AI_WORKER_SERVICE_URL:ai-worker:50051}
 
 management:
   endpoints:
