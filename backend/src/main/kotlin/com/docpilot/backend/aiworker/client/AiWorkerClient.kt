@@ -5,14 +5,17 @@ import com.docpilot.backend.aiworker.dto.IndexDocumentResponse
 import com.docpilot.backend.aiworker.exception.AiWorkerException
 import com.docpilot.backend.ask.dto.AskRequest
 import com.docpilot.backend.ask.dto.AskResponse
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import reactor.core.publisher.Mono
 import java.util.UUID
 
 @Component
 class AiWorkerClient(
     private val aiWorkerWebClient: WebClient,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
 
     fun indexDocument(
         request: IndexDocumentRequest,
@@ -26,9 +29,9 @@ class AiWorkerClient(
             .retrieve()
             .onStatus({ it.isError }) { response ->
                 response.bodyToMono(String::class.java)
-                    .map { body ->
-                        println("AI Worker Error: $body")
-                        AiWorkerException(body)
+                    .flatMap { body ->
+                        log.error("AI Worker error: {}", body)
+                        Mono.error(AiWorkerException(body))
                     }
             }
             .bodyToMono(IndexDocumentResponse::class.java)
@@ -48,9 +51,9 @@ class AiWorkerClient(
             .retrieve()
             .onStatus({ it.isError }) { response ->
                 response.bodyToMono(String::class.java)
-                    .map { body ->
-                        println("AI Worker Error: $body")
-                        AiWorkerException(body)
+                    .flatMap { body ->
+                        log.error("AI Worker error: {}", body)
+                        Mono.error(AiWorkerException(body))
                     }
             }
             .bodyToMono(AskResponse::class.java)

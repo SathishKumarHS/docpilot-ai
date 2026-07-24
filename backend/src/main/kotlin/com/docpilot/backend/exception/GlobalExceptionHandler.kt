@@ -73,6 +73,20 @@ class GlobalExceptionHandler {
             ))
     }
 
+    @ExceptionHandler(NotFoundException::class)
+    fun handleNotFound(
+        ex: NotFoundException
+    ): ResponseEntity<ErrorResponse> {
+        log.warn("Not found: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(ErrorResponse(
+                status = HttpStatus.NOT_FOUND.value(),
+                error = "Not Found",
+                message = ex.message ?: "Resource not found"
+            ))
+    }
+
     @ExceptionHandler(ConflictException::class)
     fun handleConflict(
         ex: ConflictException

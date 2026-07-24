@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.util.Base64
 import java.util.Date
 import java.util.UUID
 import javax.crypto.SecretKey
@@ -14,7 +15,7 @@ class JwtService(
     @Value("\${docpilot.jwt.secret}") secret: String,
     @Value("\${docpilot.jwt.access-token-expiration:900000}") private val accessTokenExpiration: Long,
 ) {
-    private val signingKey: SecretKey = Keys.hmacShaKeyFor(secret.toByteArray())
+    private val signingKey: SecretKey = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret))
 
     fun generateAccessToken(userId: UUID, email: String, role: String): String {
         val now = Date()

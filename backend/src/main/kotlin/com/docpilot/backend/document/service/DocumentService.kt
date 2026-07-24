@@ -13,6 +13,7 @@ import com.docpilot.backend.document.model.Document
 import com.docpilot.backend.document.repository.DocumentChunkRepository
 import com.docpilot.backend.document.repository.DocumentRepository
 import com.docpilot.backend.document.storage.MinioService
+import com.docpilot.backend.exception.NotFoundException
 import com.docpilot.backend.featureflag.service.FeatureFlagService
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
@@ -108,7 +109,7 @@ class DocumentService(
     @Transactional
     fun deleteDocument(documentId: UUID, owner: OwnerContext) {
         val document = documentRepository.findByIdAndOwnerTypeAndOwnerId(documentId, owner.ownerType, owner.ownerId)
-            ?: throw IllegalArgumentException("Document not found")
+            ?: throw NotFoundException("Document not found")
 
         aiWorkerClient.deleteDocument(document.id, document.ownerId)
         document.storageKey?.let { minioService.delete(it) }

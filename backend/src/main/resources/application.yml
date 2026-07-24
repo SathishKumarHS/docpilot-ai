@@ -20,13 +20,14 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: ${DDL_AUTO:update}
+    show-sql: ${SHOW_SQL:false}
 
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
 
 ai-worker:
   base-url: ${AI_WORKER_BASE_URL}
@@ -35,7 +36,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,env
+        include: health
 
 feature-flags:
   refresh-interval-ms: 300000
@@ -50,6 +51,9 @@ docpilot:
     secret: ${JWT_SECRET}
     access-token-expiration: ${JWT_ACCESS_EXPIRATION:900000}
     refresh-token-expiration-days: ${JWT_REFRESH_EXPIRATION_DAYS:30}
+
+  anonymous-session:
+    expiration-hours: ${ANONYMOUS_SESSION_EXPIRATION_HOURS:24}
 
   cleanup:
     cron: "0 0 * * * *" # every hour

@@ -7,6 +7,7 @@ import com.docpilot.backend.auth.model.OwnerContext
 import com.docpilot.backend.auth.model.OwnerType
 import com.docpilot.backend.auth.service.AuthService
 import com.docpilot.backend.document.service.DocumentService
+import com.docpilot.backend.oauth.AuthCodeStore
 import com.docpilot.backend.security.AnonymousSessionFilter
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
@@ -21,6 +22,7 @@ import java.util.UUID
 class AuthController(
     private val authService: AuthService,
     private val documentService: DocumentService,
+    private val authCodeStore: AuthCodeStore,
 ) {
     @PostMapping("/register")
     fun register(
@@ -55,6 +57,13 @@ class AuthController(
             ?: return mapOf("claimed" to 0)
         val count = documentService.claimDocuments(anonymousId, userOwner)
         return mapOf("claimed" to count)
+    }
+
+    @PostMapping("/exchange")
+    fun exchange(@RequestBody body: Map<String, String>): AuthResponse {
+        val code = body["code"] ?: throw IllegalArgumentException("code is required")
+        return authCodeStore.consume(code)
+            ?: throw IllegalArgumentException("Invalid or expired auth code")
     }
 
     private fun claimIfPresent(request: HttpServletRequest, authResponse: AuthResponse) {

@@ -4,6 +4,7 @@ import com.docpilot.backend.featureflag.client.FeatureFlagClient
 import com.docpilot.backend.featureflag.config.FeatureFlagProperties
 import com.docpilot.backend.featureflag.service.FeatureFlagService
 import jakarta.annotation.PostConstruct
+import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.util.concurrent.TimeUnit
@@ -14,6 +15,8 @@ class FeatureFlagRefreshScheduler(
     private val service: FeatureFlagService,
     private val properties: FeatureFlagProperties,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     @PostConstruct
     fun init() { refresh() }
 
@@ -25,7 +28,8 @@ class FeatureFlagRefreshScheduler(
         try {
             val flags = client.fetchFlags()
             service.refresh(flags)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            log.error("Failed to refresh feature flags", e)
         }
     }
 }

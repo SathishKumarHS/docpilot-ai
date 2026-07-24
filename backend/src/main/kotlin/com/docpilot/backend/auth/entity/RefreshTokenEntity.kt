@@ -14,7 +14,7 @@ class RefreshTokenEntity(
     @Id
     val id: UUID = UUID.randomUUID(),
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     val user: UserEntity,
 

@@ -18,8 +18,17 @@ func getAddr() string {
 	return defaultAddr
 }
 
+func getServiceKey() string {
+	if key := os.Getenv("SERVICE_API_KEY"); key != "" {
+		return key
+	}
+	return "test-service-api-key"
+}
+
 func TestE2E_Flags(t *testing.T) {
-	resp, err := http.Get(getAddr() + "/flags")
+	req, _ := http.NewRequest("GET", getAddr()+"/flags", nil)
+	req.Header.Set("X-Service-Key", getServiceKey())
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatalf("GET /flags: %v", err)
 	}

@@ -10,22 +10,26 @@ export default function AuthCallback() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const accessToken = searchParams.get("accessToken")
-    const refreshToken = searchParams.get("refreshToken")
-    const userId = searchParams.get("userId")
-    const email = searchParams.get("email")
-    const role = searchParams.get("role") ?? "USER"
+    const code = searchParams.get("code")
 
-    if (!accessToken || !refreshToken || !userId || !email) {
+    if (!code) {
       setStatus("error")
       setError("Invalid authentication response")
       return
     }
 
-    saveAuth(accessToken, refreshToken, userId, email, role)
-
-    apiFetch("/api/v1/auth/claim", { method: "POST" })
-      .catch(() => {})
+    fetch("/api/v1/auth/exchange", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Authentication failed")
+        const data = await res.json()
+        saveAuth(data.accessToken, data.refreshToken, data.userId, data.email, data.role)
+        return apiFetch("/api/v1/auth/claim", { method: "POST" })
+      })
+      .catch(() => setError("Authentication failed"))
       .finally(() => navigate("/", { replace: true }))
   }, [searchParams, navigate])
 

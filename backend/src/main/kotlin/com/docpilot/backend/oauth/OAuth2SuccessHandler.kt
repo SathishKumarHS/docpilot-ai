@@ -8,6 +8,7 @@ import com.docpilot.backend.auth.repository.UserRepository
 import com.docpilot.backend.auth.service.AuthService
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
@@ -20,8 +21,10 @@ class OAuth2SuccessHandler(
     private val userRepository: UserRepository,
     private val jwtService: JwtService,
     private val authService: AuthService,
+    private val authCodeStore: AuthCodeStore,
     @Value("\${docpilot.frontend-url}") private val frontendUrl: String,
 ) : AuthenticationSuccessHandler {
+    private val log = LoggerFactory.getLogger(javaClass)
 
     override fun onAuthenticationSuccess(
         request: HttpServletRequest,
@@ -50,23 +53,13 @@ class OAuth2SuccessHandler(
                         )
                     )
                 }.also {
-                    println("Existing user logged in via Google: $email")
+                    log.info("Existing user logged in via Google: {}", email)
                 }
             }
 
         val authResponse = authService.generateAuthResponse(user)
+        val code = authCodeStore.create(authResponse)
 
-        redirectWithParams(
-            response,
-            "accessToken" to authResponse.accessToken,
-            "refreshToken" to authResponse.refreshToken,
-            "userId" to authResponse.userId,
-            "email" to authResponse.email,
-        )
-    }
-
-    private fun redirectWithParams(response: HttpServletResponse, vararg params: Pair<String, String>) {
-        val query = params.joinToString("&") { (k, v) -> "$k=$v" }
-        response.sendRedirect("$frontendUrl/auth/callback?$query")
+        response.sendRedirect("$frontendUrl/auth/callback?code=$code")
     }
 }
