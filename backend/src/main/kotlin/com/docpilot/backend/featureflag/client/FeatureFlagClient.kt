@@ -1,27 +1,34 @@
 package com.docpilot.backend.featureflag.client
 
 import com.docpilot.backend.featureflag.config.FeatureFlagProperties
+import featureflag.FeatureFlagServiceGrpc
+import featureflag.Featureflag
+import io.grpc.ManagedChannelBuilder
+import jakarta.annotation.PreDestroy
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.function.client.WebClient
+import java.util.concurrent.TimeUnit
 
 @Component
 class FeatureFlagClient(
     private val properties: FeatureFlagProperties,
     @Value("\${SERVICE_API_KEY}") serviceApiKey: String,
 ) {
-    private val webClient: WebClient = WebClient.builder()
-        .baseUrl(properties.serviceUrl)
-        .defaultHeader("X-Service-Key", serviceApiKey)
+    private val channel = ManagedChannelBuilder
+        .forTarget(properties.serviceUrl)
+        .usePlaintext()
         .build()
 
-    fun fetchFlags(): Map<String, Any> {
-        return webClient
-            .get()
-            .uri("/flags")
-            .retrieve()
-            .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
-            .block() ?: emptyMap()
+    private val stub = FeatureFlagServiceGrpc.newBlockingStub(channel)
+        .withInterceptors(MetadataInterceptor("x-service-key", serviceApiKey))
+
+    fun fetchFlags(): Map<String, String> {
+        val response = stub.getFlags(Featureflag.GetFlagsRequest.getDefaultInstance())
+        return response.flagsMap
+    }
+
+    @PreDestroy
+    fun shutdown() {
+        channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
     }
 }

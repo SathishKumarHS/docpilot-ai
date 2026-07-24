@@ -1,4 +1,4 @@
-.PHONY: docker-up docker-down run-docpilot-ai web-run web-install build build-backend tidy test-feature-flag e2e-test-feature-flag e2e-test-backend e2e-test clean build-ai-worker build-feature-flag build-backend-docker rebuild-ai-worker rebuild-all logs
+.PHONY: docker-up docker-down run-docpilot-ai web-run web-install build build-backend tidy test-feature-flag e2e-test-feature-flag e2e-test-backend e2e-test clean build-ai-worker build-feature-flag build-backend-docker rebuild-ai-worker rebuild-all logs proto-gen proto-gen-go proto-gen-kotlin
 
 web-install:
 	cd web && npm install
@@ -59,6 +59,19 @@ e2e-test-backend: docker-build docker-up-no-build
 	cd backend && ./gradlew cleanE2eTest e2eTest
 
 e2e-test: e2e-test-feature-flag e2e-test-backend
+
+PROTO_DIR = feature-flag/proto
+
+proto-gen: proto-gen-go proto-gen-kotlin
+
+proto-gen-go:
+	protoc --proto_path=$(PROTO_DIR) \
+		--go_out=$(PROTO_DIR) --go_opt=paths=source_relative \
+		--go-grpc_out=$(PROTO_DIR) --go-grpc_opt=paths=source_relative \
+		$(PROTO_DIR)/featureflag.proto
+
+proto-gen-kotlin:
+	cd backend && ./gradlew generateProto
 
 clean:
 	docker-compose down --volumes --remove-orphans

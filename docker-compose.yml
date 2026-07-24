@@ -55,8 +55,10 @@ services:
     build: ./feature-flag
     ports:
       - "8090:8090"
+      - "9090:9090"
     environment:
       SERVICE_API_KEY: ${SERVICE_API_KEY:-}
+      GRPC_PORT: 9090
     healthcheck:
       test: ["CMD-SHELL", "wget -q http://localhost:8090/health -O /dev/null || exit 1"]
       interval: 5s
@@ -92,7 +94,7 @@ services:
       DATABASE_URL: jdbc:postgresql://postgres:5432/docpilot
       AI_WORKER_BASE_URL: http://ai-worker:8000
       REDIS_HOST: redis
-      FEATURE_FLAG_SERVICE_URL: http://feature-flag:8090
+      FEATURE_FLAG_SERVICE_URL: feature-flag:9090
       MINIO_URL: http://minio:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin

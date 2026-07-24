@@ -40,7 +40,7 @@ management:
 
 feature-flags:
   refresh-interval-ms: 300000
-  service-url: ${FEATURE_FLAG_SERVICE_URL:http://localhost:8090}
+  service-url: ${FEATURE_FLAG_SERVICE_URL:feature-flag:9090}
   redis-key: "feature:flags"
 
 docpilot:

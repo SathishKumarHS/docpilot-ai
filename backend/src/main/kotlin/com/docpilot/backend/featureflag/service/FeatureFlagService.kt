@@ -11,9 +11,8 @@ class FeatureFlagService(
     private val redis: StringRedisTemplate,
     private val properties: FeatureFlagProperties,
 ) {
-    fun refresh(flags: Map<String, Any>) {
-        val flat = flatten(flags)
-        redis.opsForHash<String, String>().putAll(properties.redisKey, flat)
+    fun refresh(flags: Map<String, String>) {
+        redis.opsForHash<String, String>().putAll(properties.redisKey, flags)
         redis.expire(properties.redisKey, Duration.ofMillis(properties.refreshIntervalMs + 30000))
     }
 
@@ -40,17 +39,4 @@ class FeatureFlagService(
         maxPages = getInt("limits.$tier.max-pages", 200),
         maxQuestionsPerDay = getInt("limits.$tier.max-questions-per-day", 50),
     )
-
-    @Suppress("UNCHECKED_CAST")
-    private fun flatten(source: Map<String, Any>, prefix: String = ""): Map<String, String> {
-        val result = mutableMapOf<String, String>()
-        for ((key, value) in source) {
-            val fullKey = if (prefix.isEmpty()) key else "$prefix.$key"
-            when (value) {
-                is Map<*, *> -> result.putAll(flatten(value as Map<String, Any>, fullKey))
-                else -> result[fullKey] = value.toString()
-            }
-        }
-        return result
-    }
 }

@@ -16,7 +16,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
         "spring.datasource.username=postgres",
         "spring.datasource.password=postgres",
         "spring.data.redis.host=localhost",
-        "feature-flags.service-url=http://localhost:8090",
+        "feature-flags.service-url=localhost:9090",
     ],
 )
 @Tag("e2e")
