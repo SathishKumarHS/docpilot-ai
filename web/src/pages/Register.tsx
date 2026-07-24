@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { saveAuth, claimAnonymousDocs } from "../lib/auth"
+import { saveAuth, apiFetch } from "../lib/auth"
 import { Sparkles, Loader2, Eye, EyeOff } from "lucide-react"
 
 export default function Register() {
@@ -29,9 +29,8 @@ export default function Register() {
     setIsLoading(true)
 
     try {
-      const res = await fetch("/api/v1/auth/register", {
+      const res = await apiFetch("/api/v1/auth/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       })
 
@@ -42,8 +41,7 @@ export default function Register() {
 
       const data = await res.json()
       saveAuth(data.accessToken, data.refreshToken, data.userId, data.email, data.role)
-      await claimAnonymousDocs(data.accessToken)
-      navigate("/chat", { replace: true })
+      navigate("/", { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong")
     } finally {

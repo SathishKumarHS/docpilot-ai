@@ -1,6 +1,8 @@
 package com.docpilot.backend.core.ratelimit
 
+import com.docpilot.backend.auth.service.AnonymousSessionService
 import com.docpilot.backend.core.ratelimit.RateLimitProperties.LimitConfig
+import com.docpilot.backend.security.AnonymousSessionFilter
 import io.github.bucket4j.Bandwidth
 import io.github.bucket4j.BucketConfiguration
 import io.github.bucket4j.distributed.proxy.RecoveryStrategy
@@ -22,6 +24,7 @@ import java.util.concurrent.TimeUnit
 class RateLimitFilter(
     private val properties: RateLimitProperties,
     private val proxyManager: LettuceBasedProxyManager<ByteArray>,
+    private val sessionService: AnonymousSessionService,
 ) : OncePerRequestFilter() {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -41,9 +44,7 @@ class RateLimitFilter(
             pathMatcher.match(pattern, candidate)
         } ?: return chain.doFilter(request, response)
 
-        val clientId = request.getHeader("X-Client-Id")
-            ?: request.remoteAddr
-            ?: "unknown"
+        val clientId = resolveClientId(request)
 
         val limit = properties.limits[pattern]!!
         val config = configurations.getOrPut(pattern) { newConfiguration(limit) }
@@ -66,6 +67,19 @@ class RateLimitFilter(
                 """{"error":"Too many requests. Retry after ${waitSeconds}s","status":429}"""
             )
         }
+    }
+
+    private fun resolveClientId(request: HttpServletRequest): String {
+        val attrId = request.getAttribute(AnonymousSessionFilter.ANON_CLIENT_ID_ATTR)
+        if (attrId != null) return attrId.toString()
+
+        val token = request.getHeader(AnonymousSessionFilter.ANON_TOKEN_HEADER)
+        if (token != null) {
+            val clientId = sessionService.verifyToken(token)
+            if (clientId != null) return clientId.toString()
+        }
+
+        return request.remoteAddr ?: "unknown"
     }
 
     private fun newConfiguration(limit: LimitConfig): BucketConfiguration = BucketConfiguration.builder()

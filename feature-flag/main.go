@@ -7,6 +7,7 @@ import (
 
 	"github.com/docpilot/feature-flag/config"
 	"github.com/docpilot/feature-flag/handler"
+	"github.com/docpilot/feature-flag/middleware"
 )
 
 func getPort() string {
@@ -22,8 +23,10 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
+	serviceKey := os.Getenv("SERVICE_API_KEY")
+
 	mux := http.NewServeMux()
-	mux.Handle("GET /flags", handler.NewFlagsHandler(cfg.Flags))
+	mux.Handle("GET /flags", middleware.ServiceKeyMiddleware(handler.NewFlagsHandler(cfg.Flags), serviceKey))
 	mux.Handle("GET /health", handler.NewHealthHandler())
 
 	addr := getPort()

@@ -52,7 +52,7 @@ class AuthController(
     fun claim(request: HttpServletRequest): Map<String, Any> {
         val userOwner = resolveOwner(request)
         val anonymousId = request.getAttribute(AnonymousSessionFilter.ANON_CLIENT_ID_ATTR) as? UUID
-            ?: throw IllegalArgumentException("Missing anonymous session")
+            ?: return mapOf("claimed" to 0)
         val count = documentService.claimDocuments(anonymousId, userOwner)
         return mapOf("claimed" to count)
     }
@@ -65,10 +65,10 @@ class AuthController(
     }
 
     private fun resolveOwner(request: HttpServletRequest): OwnerContext {
-        val userId = UUID.fromString(
-            org.springframework.security.core.context.SecurityContextHolder
-                .getContext().authentication.principal.toString()
-        )
+        val auth = org.springframework.security.core.context.SecurityContextHolder
+            .getContext().authentication
+            ?: throw IllegalArgumentException("Not authenticated")
+        val userId = UUID.fromString(auth.principal.toString())
         return OwnerContext(OwnerType.USER, userId)
     }
 }

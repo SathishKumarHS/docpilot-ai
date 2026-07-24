@@ -20,7 +20,6 @@ class DocumentController(
     @PostMapping
     fun upload(
         request: HttpServletRequest,
-        @RequestHeader("X-Client-Id") clientId: UUID?,
         @RequestParam("file") file: MultipartFile,
     ): UploadDocumentResponse {
         val owner = ownerResolver.resolve(request)

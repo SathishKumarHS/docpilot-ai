@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { Send, ArrowLeft, Sparkles, FileText, User, Bot, Globe } from "lucide-react"
-import { apiFetch } from "../lib/auth"
+import { apiFetch, getAccessToken, getAnonymousToken } from "../lib/auth"
 import AuthControls from "../components/AuthControls"
 
 interface ChatMessage {
@@ -12,6 +12,12 @@ interface ChatMessage {
 export default function Chat() {
   const navigate = useNavigate()
   const location = useLocation()
+
+  useEffect(() => {
+    if (!getAccessToken() && !getAnonymousToken()) {
+      navigate("/", { replace: true })
+    }
+  }, [navigate])
 
   const state = location.state as { documentId?: string; fileName?: string } | null
   const isGlobal = !state?.documentId

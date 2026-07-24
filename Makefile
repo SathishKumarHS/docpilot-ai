@@ -1,4 +1,4 @@
-.PHONY: docker-up docker-down run-docpilot-ai web-run web-install build build-backend tidy test-feature-flag e2e-test-feature-flag e2e-test-backend e2e-test clean
+.PHONY: docker-up docker-down run-docpilot-ai web-run web-install build build-backend tidy test-feature-flag e2e-test-feature-flag e2e-test-backend e2e-test clean build-ai-worker build-feature-flag build-backend-docker rebuild-ai-worker rebuild-all logs
 
 web-install:
 	cd web && npm install
@@ -16,22 +16,46 @@ build:
 build-backend:
 	cd backend && ./gradlew bootJar
 
+docker-build:
+	docker-compose build backend ai-worker feature-flag
+
+build-ai-worker:
+	docker-compose build ai-worker
+
+build-feature-flag:
+	docker-compose build feature-flag
+
+build-backend-docker:
+	docker-compose build backend
+
+rebuild-ai-worker: build-ai-worker docker-up
+
+rebuild-all:
+	docker-compose build --no-cache
+	docker-compose up -d
+
 tidy:
 	cd feature-flag && go mod tidy
 
-docker-up: build build-backend
-	docker-compose up -d --build
+docker-up: docker-build
+	docker-compose up -d
+
+docker-up-no-build:
+	docker-compose up -d
 
 docker-down:
 	docker-compose down
 
+logs:
+	docker-compose logs -f
+
 test-feature-flag:
 	cd feature-flag && go test -v ./...
 
-e2e-test-feature-flag: docker-up
+e2e-test-feature-flag: docker-build docker-up-no-build
 	cd feature-flag && go test -tags=e2e -v ./test/
 
-e2e-test-backend: docker-up
+e2e-test-backend: docker-build docker-up-no-build
 	cd backend && ./gradlew cleanE2eTest e2eTest
 
 e2e-test: e2e-test-feature-flag e2e-test-backend

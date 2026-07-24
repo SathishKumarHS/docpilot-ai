@@ -1,11 +1,23 @@
-import { useNavigate } from "react-router-dom"
-import { Sparkles, Globe, Upload, LogOut } from "lucide-react"
-import { isAuthenticated, getUser, clearAuth } from "../lib/auth"
+import { useState } from "react"
+import { useNavigate, Link } from "react-router-dom"
+import { Sparkles, Upload, LogOut, Loader2, Globe, FileText } from "lucide-react"
+import { isAuthenticated, getUser, clearAuth, startAnonymousSession } from "../lib/auth"
 
 export default function Landing() {
   const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
   const loggedIn = isAuthenticated()
   const user = getUser()
+
+  async function handleTryNow() {
+    setLoading(true)
+    try {
+      await startAnonymousSession()
+      navigate("/upload")
+    } catch {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
@@ -67,22 +79,40 @@ export default function Landing() {
           Upload your PDF documents and ask questions effortlessly. Your intelligent document companion powered by AI.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center gap-4 mt-4">
-          <button
-            onClick={() => navigate("/chat")}
-            className="inline-flex items-center gap-2.5 rounded-full bg-primary px-8 py-4 text-base font-medium text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:shadow-xl hover:shadow-primary/40 hover:scale-105 active:scale-95"
-          >
-            <Globe className="h-5 w-5" />
-            Global Chat
-          </button>
-          <button
-            onClick={() => navigate("/upload")}
-            className="inline-flex items-center gap-2.5 rounded-full bg-secondary px-8 py-4 text-base font-medium text-foreground border border-border/50 transition-all hover:bg-secondary/80 hover:scale-105 active:scale-95"
-          >
-            <Upload className="h-5 w-5" />
-            Upload PDF
-          </button>
-        </div>
+        {loggedIn ? (
+          <div className="flex flex-col sm:flex-row items-center gap-4 mt-4">
+            <button
+              onClick={() => navigate("/chat")}
+              className="inline-flex items-center gap-2.5 rounded-full bg-primary px-8 py-4 text-base font-medium text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:shadow-xl hover:shadow-primary/40 hover:scale-105 active:scale-95"
+            >
+              <Globe className="h-5 w-5" />
+              Global Chat
+            </button>
+            <button
+              onClick={() => navigate("/documents")}
+              className="inline-flex items-center gap-2.5 rounded-full bg-secondary px-8 py-4 text-base font-medium text-foreground border border-border/50 transition-all hover:bg-secondary/80 hover:scale-105 active:scale-95"
+            >
+              <FileText className="h-5 w-5" />
+              My Documents
+            </button>
+          </div>
+        ) : (
+          <>
+            <button
+              onClick={handleTryNow}
+              disabled={loading}
+              className="inline-flex items-center gap-2.5 rounded-full bg-primary px-10 py-5 text-lg font-medium text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:shadow-xl hover:shadow-primary/40 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+            >
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
+              Try DocPilot AI
+            </button>
+            <p className="text-sm text-muted-foreground mt-8">
+              Upload a PDF and ask questions — no account needed.{" "}
+              <Link to="/register" className="text-primary hover:underline font-medium">Sign up</Link> or{" "}
+              <Link to="/login" className="text-primary hover:underline font-medium">Sign in</Link> to keep your documents.
+            </p>
+          </>
+        )}
       </main>
     </div>
   )

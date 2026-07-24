@@ -4,35 +4,39 @@ import com.docpilot.backend.auth.service.AnonymousSessionService
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
-import java.util.UUID
 
 @Component
 class AnonymousSessionFilter(
     private val sessionService: AnonymousSessionService,
 ) : OncePerRequestFilter() {
 
+    private val authPaths = setOf("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/anonymous-session")
+
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
         chain: FilterChain,
     ) {
-        var clientId: UUID? = null
         val token = request.getHeader(ANON_TOKEN_HEADER)
-
         if (token != null) {
-            clientId = sessionService.verifyToken(token)
+            val clientId = sessionService.verifyToken(token)
+            if (clientId != null) {
+                request.setAttribute(ANON_CLIENT_ID_ATTR, clientId)
+                chain.doFilter(request, response)
+                return
+            }
         }
 
-        if (clientId == null) {
-            clientId = UUID.randomUUID()
-            val newToken = sessionService.createToken(clientId)
-            response.setHeader(ANON_TOKEN_HEADER, newToken)
+        val hasBearer = request.getHeader("Authorization")?.startsWith("Bearer ") == true
+        if (hasBearer || request.servletPath in authPaths) {
+            chain.doFilter(request, response)
+            return
         }
 
-        request.setAttribute(ANON_CLIENT_ID_ATTR, clientId)
-        chain.doFilter(request, response)
+        response.sendError(HttpStatus.UNAUTHORIZED.value(), "Missing or invalid anonymous session")
     }
 
     companion object {

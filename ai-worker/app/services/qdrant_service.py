@@ -1,4 +1,6 @@
 from uuid import UUID
+import time
+
 from app.config.settings import settings
 from app.exceptions import VectorDatabaseError
 from app.models.search import SearchResult
@@ -22,41 +24,48 @@ class QdrantService:
     COLLECTION_NAME = settings.qdrant_collection_name
 
     def create_collection(self):
-        try:
-            collections = qdrant_client.get_collections()
+        last_error = None
+        for attempt in range(15):
+            try:
+                collections = qdrant_client.get_collections()
 
-            existing = [
-                collection.name
-                for collection in collections.collections
-            ]
+                existing = [
+                    collection.name
+                    for collection in collections.collections
+                ]
 
-            if self.COLLECTION_NAME in existing:
-                print(f"Collection '{self.COLLECTION_NAME}' already exists.")
+                if self.COLLECTION_NAME in existing:
+                    print(f"Collection '{self.COLLECTION_NAME}' already exists.")
+                    return
+
+                qdrant_client.create_collection(
+                    collection_name=self.COLLECTION_NAME,
+                    vectors_config=VectorParams(
+                        size=3072,
+                        distance=Distance.COSINE,
+                    ),
+                )
+
+                qdrant_client.create_payload_index(
+                    collection_name=settings.qdrant_collection_name,
+                    field_name="document_id",
+                    field_schema=PayloadSchemaType.KEYWORD,
+                )
+
+                qdrant_client.create_payload_index(
+                    collection_name=settings.qdrant_collection_name,
+                    field_name="client_id",
+                    field_schema=PayloadSchemaType.KEYWORD,
+                )
+
+                print(f"Collection '{self.COLLECTION_NAME}' created.")
                 return
+            except Exception as e:
+                last_error = e
+                print(f"Waiting for Qdrant (attempt {attempt + 1}/15)...")
+                time.sleep(2)
 
-            qdrant_client.create_collection(
-                collection_name=self.COLLECTION_NAME,
-                vectors_config=VectorParams(
-                    size=3072,
-                    distance=Distance.COSINE,
-                ),
-            )
-
-            qdrant_client.create_payload_index(
-                collection_name=settings.qdrant_collection_name,
-                field_name="document_id",
-                field_schema=PayloadSchemaType.KEYWORD,
-            )
-
-            qdrant_client.create_payload_index(
-                collection_name=settings.qdrant_collection_name,
-                field_name="client_id",
-                field_schema=PayloadSchemaType.KEYWORD,
-            )
-
-            print(f"Collection '{self.COLLECTION_NAME}' created.")
-        except Exception as e:
-            raise VectorDatabaseError(f"Failed to create collection: {e}")
+        raise VectorDatabaseError(f"Failed to create collection after 15 retries: {last_error}")
 
     def upsert_embedding(
         self,

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ArrowLeft, FileText, MessageCircle, Trash2, Sparkles, Loader2, Globe } from "lucide-react"
-import { apiFetch } from "../lib/auth"
+import { ArrowLeft, FileText, MessageCircle, Trash2, Sparkles, Loader2, Globe, Upload } from "lucide-react"
+import { apiFetch, getAccessToken, getAnonymousToken } from "../lib/auth"
 import AuthControls from "../components/AuthControls"
 
 interface Document {
@@ -18,8 +18,12 @@ export default function Documents() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!getAccessToken() && !getAnonymousToken()) {
+      navigate("/", { replace: true })
+      return
+    }
     fetchDocuments()
-  }, [])
+  }, [navigate])
 
   async function fetchDocuments() {
     try {
@@ -73,6 +77,13 @@ export default function Documents() {
           <span className="font-semibold text-lg">My Documents</span>
         </div>
         <button
+          onClick={() => navigate("/upload")}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
+        >
+          <Upload className="h-4 w-4" />
+          Upload
+        </button>
+        <button
           onClick={() => navigate("/chat")}
           className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-500/10 px-3 py-1.5 text-sm font-medium text-indigo-500 hover:bg-indigo-500/20 transition-colors"
         >
@@ -95,7 +106,7 @@ export default function Documents() {
               Upload a PDF to get started
             </p>
             <button
-              onClick={() => navigate("/upload")}
+          onClick={() => navigate("/")}
               className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
               Upload Document

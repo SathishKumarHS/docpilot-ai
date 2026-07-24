@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest
         "feature-flags.service-url=http://localhost:8090",
         "ai-worker.base-url=http://localhost:8000",
         "docpilot.jwt.secret=test-secret-that-is-long-enough-for-hs256-algorithm",
+        "SERVICE_API_KEY=test-service-api-key",
     ],
 )
 class BackendApplicationTests {

@@ -67,6 +67,6 @@ class OAuth2SuccessHandler(
 
     private fun redirectWithParams(response: HttpServletResponse, vararg params: Pair<String, String>) {
         val query = params.joinToString("&") { (k, v) -> "$k=$v" }
-        response.sendRedirect("$frontendUrl?$query")
+        response.sendRedirect("$frontendUrl/auth/callback?$query")
     }
 }

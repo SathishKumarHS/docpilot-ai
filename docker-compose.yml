@@ -53,6 +53,13 @@ services:
     build: ./feature-flag
     ports:
       - "8090:8090"
+    environment:
+      SERVICE_API_KEY: ${SERVICE_API_KEY:-}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q http://localhost:8090/health -O /dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     restart: unless-stopped
 
   ai-worker:
@@ -63,6 +70,12 @@ services:
       - ./.env
     environment:
       QDRANT_URL: http://qdrant:6333
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
     restart: unless-stopped
     depends_on:
       - qdrant
@@ -81,15 +94,18 @@ services:
       MINIO_URL: http://minio:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
+      SERVICE_API_KEY: ${SERVICE_API_KEY:-}
     depends_on:
       postgres:
         condition: service_healthy
       ai-worker:
-        condition: service_started
+        condition: service_healthy
       redis:
         condition: service_healthy
       minio:
-        condition: service_started
+        condition: service_healthy
+      feature-flag:
+        condition: service_healthy
 
 volumes:
   postgres-data:

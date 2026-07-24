@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { saveAuth, claimAnonymousDocs } from "../lib/auth"
+import { saveAuth, apiFetch } from "../lib/auth"
 import { Sparkles, Loader2 } from "lucide-react"
 
 export default function AuthCallback() {
@@ -23,9 +23,10 @@ export default function AuthCallback() {
     }
 
     saveAuth(accessToken, refreshToken, userId, email, role)
-    claimAnonymousDocs(accessToken).finally(() => {
-      navigate("/chat", { replace: true })
-    })
+
+    apiFetch("/api/v1/auth/claim", { method: "POST" })
+      .catch(() => {})
+      .finally(() => navigate("/", { replace: true }))
   }, [searchParams, navigate])
 
   return (

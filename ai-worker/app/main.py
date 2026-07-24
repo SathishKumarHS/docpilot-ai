@@ -11,6 +11,7 @@ from contextlib import asynccontextmanager
 
 from app.exceptions import AiWorkerError
 from app.error_handler import ai_worker_error_handler
+from app.middleware.auth import ServiceKeyMiddleware
 from app.services.qdrant_service import qdrant_service
 
 @asynccontextmanager
@@ -29,6 +30,7 @@ app = FastAPI(
 )
 
 app.add_exception_handler(AiWorkerError, ai_worker_error_handler)
+app.add_middleware(ServiceKeyMiddleware)
 
 app.include_router(health_router)
 app.include_router(embedding_router)
