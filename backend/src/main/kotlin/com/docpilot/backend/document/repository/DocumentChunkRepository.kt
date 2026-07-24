@@ -13,6 +13,8 @@ import java.util.UUID
 @Repository
 interface DocumentChunkRepository :
     JpaRepository<DocumentChunkEntity, UUID> {
+    fun findByDocumentId(documentId: UUID): List<DocumentChunkEntity>
+
     @Transactional
     @Modifying
     @Query("delete from DocumentChunkEntity c where c.document.id = :documentId")

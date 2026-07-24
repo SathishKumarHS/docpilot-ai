@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { Send, ArrowLeft, Sparkles, FileText, User, Bot, Globe } from "lucide-react"
-import { getClientId } from "../lib/client-id"
+import { apiFetch } from "../lib/auth"
+import AuthControls from "../components/AuthControls"
 
 interface ChatMessage {
   role: "user" | "assistant"
@@ -56,12 +57,8 @@ export default function Chat() {
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/v1/ask", {
+      const response = await apiFetch("/api/v1/ask", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Client-Id": getClientId(),
-        },
         body: JSON.stringify({ question: text, document_id: documentId }),
       })
 
@@ -120,6 +117,7 @@ export default function Chat() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <AuthControls />
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>

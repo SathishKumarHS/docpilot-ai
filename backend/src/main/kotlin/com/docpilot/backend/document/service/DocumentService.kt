@@ -125,6 +125,33 @@ class DocumentService(
     }
 
     @Transactional
+    fun claimDocuments(anonymousClientId: UUID, userOwner: OwnerContext): Int {
+        val docs = documentRepository.findAllByOwnerTypeAndOwnerId(OwnerType.ANONYMOUS, anonymousClientId)
+        docs.forEach { doc ->
+            doc.ownerType = OwnerType.USER
+            doc.ownerId = userOwner.ownerId
+            documentRepository.save(doc)
+
+            aiWorkerClient.deleteDocument(doc.id, anonymousClientId)
+            val chunks = documentChunkRepository.findByDocumentId(doc.id)
+            if (chunks.isNotEmpty()) {
+                val request = IndexDocumentRequest(
+                    documentId = doc.id,
+                    chunks = chunks.map {
+                        ChunkRequest(
+                            chunkId = it.id,
+                            chunkIndex = it.chunkIndex,
+                            text = it.content,
+                        )
+                    },
+                )
+                aiWorkerClient.indexDocument(request, userOwner.ownerId)
+            }
+        }
+        return docs.size
+    }
+
+    @Transactional
     fun cleanupExpiredDocuments() {
         val minLifetime = 1
         val threshold = Instant.now().minus(minLifetime.toLong(), ChronoUnit.DAYS)

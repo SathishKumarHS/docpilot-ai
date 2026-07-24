@@ -15,5 +15,6 @@ interface DocumentRepository : JpaRepository<DocumentEntity, UUID> {
     fun countByOwnerTypeAndOwnerId(ownerType: OwnerType, ownerId: UUID): Long
     fun findByIdAndOwnerTypeAndOwnerId(id: UUID, ownerType: OwnerType, ownerId: UUID): DocumentEntity?
     fun findByOwnerTypeAndOwnerId(ownerType: OwnerType, ownerId: UUID, pageable: Pageable): Page<DocumentEntity>
+    fun findAllByOwnerTypeAndOwnerId(ownerType: OwnerType, ownerId: UUID): List<DocumentEntity>
     fun findAllByUploadedAtBefore(uploadedAt: Instant): List<DocumentEntity>
 }

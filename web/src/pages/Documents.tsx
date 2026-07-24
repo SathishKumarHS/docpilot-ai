@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { ArrowLeft, FileText, MessageCircle, Trash2, Sparkles, Loader2, Globe } from "lucide-react"
-import { getClientId } from "../lib/client-id"
+import { apiFetch } from "../lib/auth"
+import AuthControls from "../components/AuthControls"
 
 interface Document {
   id: string
@@ -22,9 +23,7 @@ export default function Documents() {
 
   async function fetchDocuments() {
     try {
-      const res = await fetch("/api/v1/documents", {
-        headers: { "X-Client-Id": getClientId() },
-      })
+      const res = await apiFetch("/api/v1/documents")
       if (res.ok) {
         const data = await res.json()
         setDocuments(data.content ?? data)
@@ -39,9 +38,8 @@ export default function Documents() {
   async function handleDelete(id: string) {
     setDeletingId(id)
     try {
-      const res = await fetch(`/api/v1/documents/${id}`, {
+      const res = await apiFetch(`/api/v1/documents/${id}`, {
         method: "DELETE",
-        headers: { "X-Client-Id": getClientId() },
       })
       if (res.ok) {
         setDocuments((prev) => prev.filter((d) => d.id !== id))
@@ -81,6 +79,7 @@ export default function Documents() {
           <Globe className="h-4 w-4" />
           Global Chat
         </button>
+        <AuthControls />
       </header>
 
       <main className="flex-1 p-6 max-w-3xl mx-auto w-full">

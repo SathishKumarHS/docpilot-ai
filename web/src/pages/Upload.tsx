@@ -1,7 +1,8 @@
 import { useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { Upload as UploadIcon, FileText, ArrowLeft, Sparkles, Loader2, Globe } from "lucide-react"
-import { getClientId } from "../lib/client-id"
+import { apiFetch } from "../lib/auth"
+import AuthControls from "../components/AuthControls"
 
 export default function UploadPage() {
   const navigate = useNavigate()
@@ -55,11 +56,8 @@ export default function UploadPage() {
       const formData = new FormData()
       formData.append("file", file)
 
-      const response = await fetch("/api/v1/documents", {
+      const response = await apiFetch("/api/v1/documents", {
         method: "POST",
-        headers: {
-          "X-Client-Id": getClientId(),
-        },
         body: formData,
       })
 
@@ -119,6 +117,7 @@ export default function UploadPage() {
           <Globe className="h-4 w-4" />
           Global Chat
         </button>
+        <AuthControls />
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center p-6">

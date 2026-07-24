@@ -19,9 +19,9 @@ class DocumentEntity(
 
     val uploadedAt: Instant,
 
-    val ownerId : UUID,
+    var ownerId : UUID,
 
-    val ownerType : OwnerType,
+    var ownerType : OwnerType,
 
     var storageKey: String? = null,
 )

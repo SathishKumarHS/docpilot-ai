@@ -3,6 +3,9 @@ import Landing from "./pages/Landing"
 import UploadPage from "./pages/Upload"
 import Chat from "./pages/Chat"
 import Documents from "./pages/Documents"
+import Login from "./pages/Login"
+import Register from "./pages/Register"
+import AuthCallback from "./pages/AuthCallback"
 
 function App() {
   return (
@@ -12,6 +15,9 @@ function App() {
         <Route path="/upload" element={<UploadPage />} />
         <Route path="/chat" element={<ChatWrapper />} />
         <Route path="/documents" element={<Documents />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
       </Routes>
     </BrowserRouter>
   )

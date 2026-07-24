@@ -59,6 +59,34 @@ class GlobalExceptionHandler {
             ))
     }
 
+    @ExceptionHandler(UnauthorizedException::class)
+    fun handleUnauthorized(
+        ex: UnauthorizedException
+    ): ResponseEntity<ErrorResponse> {
+        log.warn("Unauthorized: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.UNAUTHORIZED)
+            .body(ErrorResponse(
+                status = HttpStatus.UNAUTHORIZED.value(),
+                error = "Unauthorized",
+                message = "Invalid email or password"
+            ))
+    }
+
+    @ExceptionHandler(ConflictException::class)
+    fun handleConflict(
+        ex: ConflictException
+    ): ResponseEntity<ErrorResponse> {
+        log.warn("Conflict: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(ErrorResponse(
+                status = HttpStatus.CONFLICT.value(),
+                error = "Conflict",
+                message = ex.message ?: "Resource already exists"
+            ))
+    }
+
     @ExceptionHandler(
         IllegalArgumentException::class,
         MissingRequestHeaderException::class,

@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest
         "spring.data.redis.host=localhost",
         "feature-flags.service-url=http://localhost:8090",
         "ai-worker.base-url=http://localhost:8000",
+        "docpilot.jwt.secret=test-secret-that-is-long-enough-for-hs256-algorithm",
     ],
 )
 class BackendApplicationTests {
