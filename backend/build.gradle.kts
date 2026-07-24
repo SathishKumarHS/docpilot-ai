@@ -30,6 +30,7 @@ dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    testImplementation("org.springframework:spring-webflux")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -103,6 +104,9 @@ tasks.register<Test>("e2eTest") {
     testClassesDirs = sourceSets["test"].output.classesDirs
     classpath = sourceSets["test"].runtimeClasspath
     shouldRunAfter(tasks.test)
+
+    environment("SERVICE_API_KEY", System.getenv("SERVICE_API_KEY") ?: "")
+    environment("JWT_SECRET", System.getenv("JWT_SECRET") ?: "")
 
     testLogging {
         events("passed", "failed", "skipped")
