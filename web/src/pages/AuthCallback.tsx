@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { saveAuth, apiFetch, getAnonymousToken } from "../lib/auth"
+import { saveAuth, apiFetch, getAnonymousToken } from "../lib/auth.ts"
 import { Sparkles, Loader2 } from "lucide-react"
 
 export default function AuthCallback() {

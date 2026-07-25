@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import { LogOut } from "lucide-react"
-import { isAuthenticated, getUser, clearAuth } from "../lib/auth"
+import { isAuthenticated, getUser, clearAuth } from "../lib/auth.ts"
 
 export default function AuthControls() {
   const navigate = useNavigate()

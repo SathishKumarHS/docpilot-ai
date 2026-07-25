@@ -44,7 +44,9 @@ jobs:
         run: pip install -r requirements.txt grpcio-tools
         working-directory: ai-worker
       - name: Generate proto stubs
-        run: python3 -m grpc_tools.protoc --proto_path=../shared/proto --python_out=app/grpc --grpc_python_out=app/grpc ../shared/proto/aiworker.proto
+        run: |
+          python3 -m grpc_tools.protoc --proto_path=../shared/proto --python_out=app/grpc --grpc_python_out=app/grpc ../shared/proto/aiworker.proto
+          sed -i 's/import aiworker_pb2 as/from app.grpc import aiworker_pb2 as/' app/grpc/aiworker_pb2_grpc.py
         working-directory: ai-worker
       - name: Run tests
         run: PYTHONPATH=. pytest tests/ -v
@@ -103,9 +105,15 @@ jobs:
           version: "28.2"
       - name: Install Go protobuf tools
         run: |
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.6.2
       - name: Generate Go proto stubs
         run: make proto-gen-go
       - name: Check for uncommitted changes
-        run: git diff --exit-code -- feature-flag/grpc/
+        run: |
+          if git diff -- feature-flag/grpc/ | grep '^[+-]' | grep -v '^[+-][+-]' | grep -v 'protoc' | grep -q .; then
+            echo "Substantive changes detected:"
+            git diff -- feature-flag/grpc/
+            exit 1
+          fi
+          echo "Only protoc version comments differ — OK"

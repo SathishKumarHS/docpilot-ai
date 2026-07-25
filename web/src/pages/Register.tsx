@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { saveAuth, apiFetch } from "../lib/auth"
+import { saveAuth, apiFetch } from "../lib/auth.ts"
 import { Sparkles, Loader2, Eye, EyeOff } from "lucide-react"
 
 export default function Register() {

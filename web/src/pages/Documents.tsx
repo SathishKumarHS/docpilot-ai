@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { ArrowLeft, FileText, MessageCircle, Trash2, Sparkles, Loader2, Globe, Upload } from "lucide-react"
-import { apiFetch, getAccessToken, getAnonymousToken } from "../lib/auth"
-import AuthControls from "../components/AuthControls"
+import { apiFetch, getAccessToken, getAnonymousToken } from "../lib/auth.ts"
+import AuthControls from "../components/AuthControls.tsx"
 
 interface Document {
   id: string

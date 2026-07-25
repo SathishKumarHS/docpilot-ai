@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom"
-import Landing from "./pages/Landing"
-import UploadPage from "./pages/Upload"
-import Chat from "./pages/Chat"
-import Documents from "./pages/Documents"
-import Login from "./pages/Login"
-import Register from "./pages/Register"
-import AuthCallback from "./pages/AuthCallback"
+import Landing from "./pages/Landing.tsx"
+import UploadPage from "./pages/Upload.tsx"
+import Chat from "./pages/Chat.tsx"
+import Documents from "./pages/Documents.tsx"
+import Login from "./pages/Login.tsx"
+import Register from "./pages/Register.tsx"
+import AuthCallback from "./pages/AuthCallback.tsx"
 
 function App() {
   return (

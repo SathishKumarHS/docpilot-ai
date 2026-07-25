@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { Send, ArrowLeft, Sparkles, FileText, User, Bot, Globe } from "lucide-react"
-import { apiFetch, getAccessToken, getAnonymousToken } from "../lib/auth"
-import AuthControls from "../components/AuthControls"
+import { apiFetch, getAccessToken, getAnonymousToken } from "../lib/auth.ts"
+import AuthControls from "../components/AuthControls.tsx"
 
 interface ChatMessage {
   role: "user" | "assistant"

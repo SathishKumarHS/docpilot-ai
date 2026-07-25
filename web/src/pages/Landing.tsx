@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { Sparkles, Upload, LogOut, Loader2, Globe, FileText } from "lucide-react"
-import { isAuthenticated, getUser, clearAuth, startAnonymousSession } from "../lib/auth"
+import { isAuthenticated, getUser, clearAuth, startAnonymousSession } from "../lib/auth.ts"
 
 export default function Landing() {
   const navigate = useNavigate()

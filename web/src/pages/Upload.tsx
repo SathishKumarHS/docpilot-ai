@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Upload as UploadIcon, FileText, ArrowLeft, Sparkles, Loader2, Globe } from "lucide-react"
-import { apiFetch, getAccessToken, getAnonymousToken } from "../lib/auth"
-import AuthControls from "../components/AuthControls"
+import { apiFetch, getAccessToken, getAnonymousToken } from "../lib/auth.ts"
+import AuthControls from "../components/AuthControls.tsx"
 
 export default function UploadPage() {
   const navigate = useNavigate()
