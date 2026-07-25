@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (Kotlin)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+          cache: gradle
+      - name: Run tests
+        run: ./gradlew test
+        working-directory: backend
+      - name: Run bootJar (build check)
+        run: ./gradlew bootJar --no-daemon
+        working-directory: backend
+
+  ai-worker:
+    name: AI Worker (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: ai-worker/requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt grpcio-tools
+        working-directory: ai-worker
+      - name: Generate proto stubs
+        run: python3 -m grpc_tools.protoc --proto_path=../shared/proto --python_out=app/grpc --grpc_python_out=app/grpc ../shared/proto/aiworker.proto
+        working-directory: ai-worker
+      - name: Run tests
+        run: PYTHONPATH=. pytest tests/ -v
+        working-directory: ai-worker
+
+  feature-flag:
+    name: Feature Flag (Go)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go 1.25
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          cache-dependency-path: feature-flag/go.sum
+      - name: Run tests
+        run: go test -v ./...
+        working-directory: feature-flag
+      - name: Run build check
+        run: go build -o /dev/null .
+        working-directory: feature-flag
+
+  web:
+    name: Web (React/TypeScript)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: web
+      - name: Lint
+        run: npm run lint
+        working-directory: web
+      - name: Build
+        run: npm run build
+        working-directory: web
+
+  proto-check:
+    name: Proto generation check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go 1.25
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "28.2"
+      - name: Install Go protobuf tools
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+      - name: Generate Go proto stubs
+        run: make proto-gen-go
+      - name: Check for uncommitted changes
+        run: git diff --exit-code -- feature-flag/grpc/
