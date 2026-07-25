@@ -39,7 +39,7 @@ build:
 build-backend:
 	cd backend && ./gradlew bootJar
 
-docker-build: proto-gen build-backend
+docker-build:
 	docker-compose build backend ai-worker feature-flag
 
 build-ai-worker:
@@ -76,7 +76,7 @@ test-feature-flag:
 	cd feature-flag && go test -v ./...
 
 test-ai-worker: proto-gen-python
-	cd ai-worker && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt pytest pytest-asyncio pytest-mock httpx && PYTHONPATH=. pytest tests/
+	cd ai-worker && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt && PYTHONPATH=. pytest tests/
 
 test-backend:
 	cd backend && ./gradlew test

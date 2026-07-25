@@ -1,3 +1,16 @@
+FROM eclipse-temurin:21-jdk AS builder
+
+WORKDIR /build
+
+COPY gradlew gradlew.bat settings.gradle.kts build.gradle.kts ./
+COPY gradle ./gradle
+
+RUN mkdir -p ../shared/proto
+COPY shared/proto ../shared/proto
+COPY backend/src ./src
+
+RUN ./gradlew bootJar --no-daemon
+
 FROM eclipse-temurin:21-jdk
 
 WORKDIR /app
@@ -6,7 +19,7 @@ RUN groupadd -r app && useradd -r -g app app && \
     apt-get update && apt-get install -y --no-install-recommends curl && \
     rm -rf /var/lib/apt/lists/*
 
-COPY build/libs/backend.jar app.jar
+COPY --from=builder /build/build/libs/backend.jar app.jar
 
 RUN chown app:app app.jar
 

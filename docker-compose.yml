@@ -87,7 +87,9 @@ services:
       - qdrant
 
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     ports:
       - "8080:8080"
     env_file:
