@@ -99,14 +99,50 @@ Key variables (see `.env.example` for full list):
 
 ```
 docpilot-ai/
-├── backend/          # Spring Boot REST API (Kotlin)
-├── ai-worker/        # AI service (Python/FastAPI)
-├── feature-flag/     # Feature flag service (Go)
-├── web/              # React SPA (TypeScript)
-├── shared/proto/     # Protobuf definitions
-├── docker-compose.yml
-├── .env.example
-└── Makefile
+├── backend/                          # Spring Boot REST API (Kotlin)
+│   └── src/main/kotlin/.../backend/
+│       ├── auth/                     # Auth controllers, JWT, session services
+│       ├── document/                 # Document upload, chunking, cleanup
+│       ├── ask/                      # RAG question-answering
+│       ├── aiworker/                 # gRPC client for ai-worker
+│       ├── featureflag/              # gRPC client + flag cache
+│       ├── security/                 # JWT + anonymous session filters
+│       ├── oauth/                    # OAuth2 exchange handler
+│       ├── config/                   # Rate limiting, web config
+│       ├── core/                     # Entities, repositories
+│       ├── exception/                # Global error handler
+│       └── health/                   # Health check endpoint
+├── ai-worker/                        # AI service (Python/FastAPI)
+│   ├── app/
+│   │   ├── api/                      # REST endpoints
+│   │   ├── grpc/                     # gRPC servicer + generated stubs
+│   │   ├── services/                 # Qdrant, Gemini, indexing, search
+│   │   ├── clients/                  # External API clients
+│   │   ├── middleware/               # Auth middleware
+│   │   ├── models/                   # Pydantic schemas
+│   │   ├── prompts/                  # RAG prompt templates
+│   │   └── config/                   # App configuration
+│   └── tests/                        # pytest test suite
+├── feature-flag/                     # Feature flag service (Go)
+│   ├── handler/                      # HTTP handlers
+│   ├── grpc/                         # gRPC server + generated stubs
+│   ├── middleware/                   # Auth middleware
+│   ├── config/                       # Config loader
+│   ├── data/                         # flags.yml (tier limits)
+│   └── test/                         # Go test suite
+├── web/                              # React SPA (TypeScript)
+│   └── src/
+│       ├── components/               # Shared UI components
+│       ├── pages/                    # Route pages
+│       ├── lib/                      # Auth utils, API client
+│       └── assets/                   # Static assets
+├── shared/proto/                     # Protobuf definitions (single source of truth)
+│   ├── aiworker.proto                # IndexDocument, Ask, DeleteDocument
+│   └── featureflag.proto             # GetFlags
+├── docker-compose.yml                # 7-container orchestration
+├── .env.example                      # Environment variable template
+├── .github/workflows/                # CI/CD pipelines
+└── Makefile                          # Build, test, run targets
 ```
 
 ---
