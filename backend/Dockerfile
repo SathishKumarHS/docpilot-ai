@@ -2,8 +2,8 @@ FROM eclipse-temurin:21-jdk AS builder
 
 WORKDIR /build
 
-COPY gradlew gradlew.bat settings.gradle.kts build.gradle.kts ./
-COPY gradle ./gradle
+COPY backend/gradlew backend/gradlew.bat backend/settings.gradle.kts backend/build.gradle.kts ./
+COPY backend/gradle ./gradle
 
 RUN mkdir -p ../shared/proto
 COPY shared/proto ../shared/proto

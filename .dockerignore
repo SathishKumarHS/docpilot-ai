@@ -15,6 +15,6 @@ web/src
 ai-worker/tests
 ai-worker/.venv
 backend/src/test
-backend/gradle/wrapper/gradle-wrapper.jar
+# backend/gradle/wrapper/gradle-wrapper.jar
 *.md
 LICENSE
