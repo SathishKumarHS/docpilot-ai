@@ -17,18 +17,18 @@ AI-powered document intelligence platform. Upload PDFs, ask questions, get answe
 ## Architecture
 
 ```
-Web (React SPA) ──── REST ────> Backend (Kotlin/Spring Boot)
+Web (React) ──── REST ────> Backend (Kotlin/Spring Boot)
                                     │
                           ┌─────────┼────────────┬───────────┬─────────┐
-                          │ gRPC    │ gRPC        │ S3        │ JPA     │ Redis
-                          ▼         ▼             ▼           ▼         ▼
-                    ai-worker   feature-flag    MinIO     PostgreSQL  Redis
-                    (Python)    (Go)            (PDFs)    (metadata)  (rate
+                          │ gRPC    │ gRPC       │ S3        │ JPA     │ Redis
+                          ▼         ▼            ▼           ▼         ▼
+                    ai-worker   feature-flag   MinIO     PostgreSQL  Redis
+                    (Python)    (Go)           (PDFs)    (metadata)  (rate
                           │                                           limit/
-                          │ HTTP                                       cache)
+                          │ HTTP                                      cache)
                           ▼
-                       Qdrant
-                    (Vector DB)
+                        Qdrant
+                      (Vector DB)
 ```
 
 **Data Flow**: Upload PDF → MinIO storage → PDFBox text extraction → chunking (500 chars) → gRPC `IndexDocument` → Gemini embeddings → Qdrant storage. Ask question → check rate limit + daily cap → gRPC `Ask` → embed query → Qdrant semantic search → RAG prompt → Gemini answer.
@@ -75,8 +75,10 @@ make docker-up                # build & start all services
 |---|---|
 | `make docker-up` | Build and start all containers |
 | `make docker-down` | Stop all containers |
-| `make test` | Run all unit tests |
+| `make unit-test` | Run all unit tests (Go + Kotlin + Python) |
+| `make e2e-test` | Run end-to-end tests |
 | `make proto-gen` | Regenerate gRPC stubs |
+| `make clean` | Tear down volumes and clean artifacts |
 
 ---
 
@@ -172,10 +174,8 @@ docpilot-ai/
 ## Testing
 
 ```bash
-make test                    # All unit tests
-make test-backend            # JUnit 5 + Mockito
-make test-ai-worker          # pytest + pytest-asyncio
-make test-feature-flag       # Go testing package
+make unit-test    # All unit tests (Go + Kotlin + Python)
+make e2e-test     # End-to-end tests (requires Docker services running)
 ```
 
 ---
