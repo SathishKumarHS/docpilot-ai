@@ -17,19 +17,21 @@ AI-powered document intelligence platform. Upload PDFs, ask questions, get answe
 ## Architecture
 
 ```
-Web (React) ──── REST ────> Backend (Kotlin/Spring Boot)
-                                    │
-                          ┌─────────┼────────────┬───────────┬─────────┐
-                          │ gRPC    │ gRPC       │ S3        │ JPA     │ Redis
-                          ▼         ▼            ▼           ▼         ▼
-                    ai-worker   feature-flag   MinIO     PostgreSQL  Redis
-                    (Python)    (Go)           (PDFs)    (metadata)  (rate
-                          │                                           limit/
-                          │ HTTP                                      cache)
-                          ▼
-                        Qdrant
-                      (Vector DB)
+Web (React, :5173) ── REST ──> Backend (Kotlin, :8080)
+                                      │
+                            ┌─────────┼───────────┬──────────┬─────────┐
+                            │ gRPC    │ gRPC      │ S3       │ JPA     │ Redis
+                            ▼         ▼           ▼          ▼         ▼
+                      ai-worker  feature-flag  MinIO    PostgreSQL  Redis
+                      (Python)   (Go)         (PDFs)   (metadata)  (rate
+                            │                                          limit/
+                            │ HTTP                                     cache)
+                            ▼
+                          Qdrant
+                        (Vector DB)
 ```
+
+> Frontend runs locally via `npm run dev`. All other services run in Docker.
 
 **Data Flow**: Upload PDF → MinIO storage → PDFBox text extraction → chunking (500 chars) → gRPC `IndexDocument` → Gemini embeddings → Qdrant storage. Ask question → check rate limit + daily cap → gRPC `Ask` → embed query → Qdrant semantic search → RAG prompt → Gemini answer.
 
@@ -63,22 +65,51 @@ Web (React) ──── REST ────> Backend (Kotlin/Spring Boot)
 
 ## Quick Start
 
+### Prerequisites
+- Docker & Docker Compose
+- Node.js 22+
+- A [Gemini API key](https://aistudio.google.com/apikey)
+
+### Step 1 — Start backend services
+
 ```bash
-cp .env.example .env          # fill in API keys
-make docker-up                # build & start all services
-# open http://localhost:8080
+cp .env.example .env          # edit .env with GEMINI_API_KEY, JWT_SECRET, SERVICE_API_KEY
+make docker-up                # builds & starts PostgreSQL, Redis, Qdrant, MinIO, and all services
 ```
+
+### Step 2 — Start frontend (separate terminal)
+
+```bash
+cd web
+npm install
+npm run dev                   # opens at http://localhost:5173
+```
+
+### Step 3 — Use the app
+
+1. Open http://localhost:5173
+2. Click **Get Started** to create an anonymous session (no sign-up needed)
+3. Upload a PDF → wait for indexing → ask questions in chat
+
+> Backend API is available at http://localhost:8080. Swagger UI at http://localhost:8080/swagger-ui.html.
+
+### Screenshots
+
+> _Add screenshots here: upload page, chat interface, document list._
+> _Record a 30s demo GIF and replace this placeholder._
+
+---
 
 ### Makefile Commands
 
 | Command | Description |
 |---|---|
-| `make docker-up` | Build and start all containers |
+| `make docker-up` | Build and start all Docker services |
 | `make docker-down` | Stop all containers |
-| `make unit-test` | Run all unit tests (Go + Kotlin + Python) |
-| `make e2e-test` | Run end-to-end tests |
-| `make proto-gen` | Regenerate gRPC stubs |
-| `make clean` | Tear down volumes and clean artifacts |
+| `make unit-test` | Run all unit tests |
+| `make e2e-test` | Run end-to-end tests (requires running services) |
+| `make proto-gen` | Regenerate gRPC stubs from `shared/proto/` |
+| `make clean` | Remove volumes and build artifacts |
 
 ---
 
