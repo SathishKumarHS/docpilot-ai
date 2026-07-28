@@ -23,9 +23,21 @@ message IndexDocumentResponse {
   int32 indexed_chunks = 1;
 }
 
+enum MessageRole {
+  MESSAGE_ROLE_UNSPECIFIED = 0;
+  USER = 1;
+  ASSISTANT = 2;
+}
+
+message ChatMessage {
+  MessageRole role = 1;
+  string content = 2;
+}
+
 message AskRequest {
   string question = 1;
   optional string document_id = 2;
+  repeated ChatMessage chat_history = 3;
 }
 
 message AskResponse {

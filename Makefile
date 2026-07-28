@@ -1,4 +1,4 @@
-.PHONY: unit-test e2e-test proto-gen clean docker-up docker-down
+.PHONY: unit-test e2e-test proto-gen clean docker-up docker-down run-ui
 
 PROTO_DIR = shared/proto
 AI_WORKER_GRPC_DIR = ai-worker/app/grpc
@@ -42,6 +42,9 @@ unit-test: proto-gen-python
 e2e-test: docker-build docker-up-no-build
 	export $$(grep '^SERVICE_API_KEY=' .env | xargs) && cd feature-flag && go test -tags=e2e -v ./test/
 	export $$(grep -E '^(SERVICE_API_KEY|JWT_SECRET)=' .env | xargs) && cd backend && ./gradlew cleanE2eTest e2eTest
+
+run-ui:
+	cd web && npm run dev
 
 clean:
 	docker-compose down --volumes --remove-orphans

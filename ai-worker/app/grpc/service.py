@@ -4,6 +4,7 @@ from uuid import UUID
 import grpc
 
 from app.grpc import aiworker_pb2, aiworker_pb2_grpc
+from app.grpc.aiworker_pb2 import MessageRole
 from app.models.index import ChunkRequest, IndexDocumentRequest as IndexRequestModel
 from app.services.index_service import index_service
 from app.services.ask_service import ask_service
@@ -50,10 +51,13 @@ class AiWorkerGrpcServicer(aiworker_pb2_grpc.AiWorkerServiceServicer):
 
         client_id = _get_client_id(context)
 
+        chat_history = [(MessageRole.Name(m.role).lower(), m.content) for m in request.chat_history]
+
         answer = ask_service.ask(
             question=request.question,
             client_id=client_id,
             document_id=request.document_id or None,
+            chat_history=chat_history,
         )
         return aiworker_pb2.AskResponse(answer=answer)
 

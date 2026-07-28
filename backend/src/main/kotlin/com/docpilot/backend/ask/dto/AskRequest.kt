@@ -8,5 +8,5 @@ data class AskRequest(
     @field:NotBlank
     val question: String,
     @JsonProperty("document_id")
-    val documentId: UUID? = null
+    val documentId: UUID? = null,
 )

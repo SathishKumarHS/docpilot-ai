@@ -13,6 +13,15 @@ interface ChatProps {
   documentId?: string | null
 }
 
+function welcomeMessage(isGlobal: boolean, fileName: string): ChatMessage {
+  return {
+    role: "assistant",
+    content: isGlobal
+      ? "Hello! I can answer questions across all your documents. What would you like to know?"
+      : `Hello! I've analyzed **${fileName}**. What would you like to know about this document?`,
+  }
+}
+
 export default function Chat({ documentId: propDocumentId }: ChatProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -31,23 +40,37 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
   const isGlobal = !documentId
   const fileName = params.get("fileName") ?? (location.state as { fileName?: string } | null)?.fileName ?? "document.pdf"
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: "assistant",
-      content: isGlobal
-        ? "Hello! I can answer questions across all your documents. What would you like to know?"
-        : `Hello! I've analyzed **${fileName}**. What would you like to know about this document?`,
-    },
-  ])
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
+
+  function isRole(v: string): v is "user" | "assistant" {
+    return v === "user" || v === "assistant"
+  }
+
+  useEffect(() => {
+    async function loadHistory() {
+      try {
+        const params = new URLSearchParams()
+        if (documentId) params.set("document_id", documentId)
+        const res = await apiFetch(`/api/v1/ask/history?${params}`)
+        if (!res.ok) return
+        const data: { role: string; content: string }[] = await res.json()
+        setMessages(data.length > 0
+          ? data.map(m => ({ role: isRole(m.role) ? m.role : "assistant", content: m.content }))
+          : [welcomeMessage(isGlobal, fileName)])
+      } catch {
+        setMessages([welcomeMessage(isGlobal, fileName)])
+      }
+    }
+    loadHistory()
+  }, [documentId, isGlobal, fileName])
 
   function autoResize() {
     const el = inputRef.current
@@ -72,7 +95,10 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
     try {
       const response = await apiFetch("/api/v1/ask", {
         method: "POST",
-        body: JSON.stringify({ question: text, document_id: documentId }),
+        body: JSON.stringify({
+          question: text,
+          document_id: documentId,
+        }),
       })
 
       if (!response.ok) {

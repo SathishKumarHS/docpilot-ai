@@ -98,6 +98,7 @@ class TestGrpcServicer:
             question="test question",
             client_id="client-1",
             document_id=None,
+            chat_history=[],
         )
 
     def test_ask_with_document_id(self):
@@ -129,6 +130,7 @@ class TestGrpcServicer:
             question="test question",
             client_id="client-1",
             document_id="doc-1",
+            chat_history=[],
         )
 
     def test_ask_unauthenticated(self):

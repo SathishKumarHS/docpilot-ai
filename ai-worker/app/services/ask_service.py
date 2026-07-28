@@ -5,7 +5,13 @@ from app.services.qdrant_service import qdrant_service
 
 class AskService:
 
-    def ask(self, question: str, client_id: str, document_id: str | None = None) -> str:
+    def ask(
+        self,
+        question: str,
+        client_id: str,
+        document_id: str | None = None,
+        chat_history: list[tuple[str, str]] | None = None,
+    ) -> str:
         embedding_response = gemini_service.generate_embedding(question)
 
         search_results = qdrant_service.search(
@@ -18,6 +24,7 @@ class AskService:
         prompt = build_rag_prompt(
             question,
             search_results,
+            chat_history,
         )
 
         return gemini_service.generate_answer(prompt)

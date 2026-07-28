@@ -7,9 +7,12 @@ COPY backend/gradle ./gradle
 
 RUN mkdir -p ../shared/proto
 COPY shared/proto ../shared/proto
+
+RUN ./gradlew dependencies --no-daemon -Dorg.gradle.jvmargs="-Xmx256m"
+
 COPY backend/src ./src
 
-RUN ./gradlew bootJar --no-daemon
+RUN ./gradlew bootJar --no-daemon -Dorg.gradle.jvmargs="-Xmx256m"
 
 FROM eclipse-temurin:21-jdk
 

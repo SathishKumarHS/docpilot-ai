@@ -1,12 +1,13 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { Sparkles, Upload, LogOut, Loader2, Globe, FileText } from "lucide-react"
-import { isAuthenticated, getUser, clearAuth, startAnonymousSession } from "../lib/auth.ts"
+import { Sparkles, Upload, LogOut, Loader2, Globe, FileText, MessageSquareText } from "lucide-react"
+import { isAuthenticated, getUser, clearAuth, startAnonymousSession, getAnonymousToken } from "../lib/auth.ts"
 
 export default function Landing() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const loggedIn = isAuthenticated()
+  const hasAnonSession = !!getAnonymousToken()
   const user = getUser()
 
   async function handleTryNow() {
@@ -17,6 +18,10 @@ export default function Landing() {
     } catch {
       setLoading(false)
     }
+  }
+
+  function handleContinue() {
+    navigate("/upload")
   }
 
   return (
@@ -96,6 +101,20 @@ export default function Landing() {
               My Documents
             </button>
           </div>
+        ) : hasAnonSession ? (
+          <>
+            <button
+              onClick={handleContinue}
+              className="inline-flex items-center gap-2.5 rounded-full bg-primary px-10 py-5 text-lg font-medium text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:shadow-xl hover:shadow-primary/40 hover:scale-105 active:scale-95 mt-4"
+            >
+              <MessageSquareText className="h-5 w-5" />
+              Continue Chatting
+            </button>
+            <p className="text-sm text-muted-foreground mt-8">
+              <Link to="/register" className="text-primary hover:underline font-medium">Sign up</Link> or{" "}
+              <Link to="/login" className="text-primary hover:underline font-medium">Sign in</Link> to save your documents.
+            </p>
+          </>
         ) : (
           <>
             <button

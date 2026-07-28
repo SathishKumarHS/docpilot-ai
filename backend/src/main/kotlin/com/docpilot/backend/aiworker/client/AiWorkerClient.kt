@@ -60,11 +60,24 @@ class AiWorkerClient(
     fun ask(
         request: AskRequest,
         clientId: UUID,
+        chatHistory: List<Pair<String, String>> = emptyList(),
     ): AskResponse {
         return try {
             val protoRequest = Aiworker.AskRequest.newBuilder()
                 .setQuestion(request.question)
                 .apply { request.documentId?.let { setDocumentId(it.toString()) } }
+                .addAllChatHistory(chatHistory.map { (role, content) ->
+                    Aiworker.ChatMessage.newBuilder()
+                        .setRole(
+                            when (role) {
+                                "user" -> Aiworker.MessageRole.USER
+                                "assistant" -> Aiworker.MessageRole.ASSISTANT
+                                else -> error("Unknown role: $role")
+                            }
+                        )
+                        .setContent(content)
+                        .build()
+                })
                 .build()
 
             val response = stub.withInterceptors(
