@@ -43,7 +43,7 @@ Web (React, :5173) ── REST ──> Backend (Kotlin, :8080)
 |---|---|
 | **Auth** | Email/password, Google OAuth2, anonymous sessions, JWT access + refresh tokens |
 | **Documents** | PDF upload, text extraction, chunking, MinIO storage, scheduled expiry cleanup |
-| **AI Chat** | Global + per-document RAG Q&A, semantic search via Qdrant, Gemini-generated answers |
+| **AI Chat** | Global + per-document RAG Q&A, conversation history context, semantic search via Qdrant, Gemini-generated answers |
 | **Feature Flags** | Tier-based limits (anonymous vs. registered), YAML-driven, cached in Redis |
 | **Rate Limiting** | Token-bucket per endpoint, Redis-backed via Bucket4j |
 | **Multi-Tenancy** | All data isolated by `client_id` |
@@ -193,7 +193,8 @@ docpilot-ai/
 | `POST` | `/api/v1/documents` | Bearer/Anon | Upload PDF |
 | `GET` | `/api/v1/documents` | Bearer/Anon | List documents |
 | `DELETE` | `/api/v1/documents/{id}` | Bearer/Anon | Delete document |
-| `POST` | `/api/v1/ask` | Bearer/Anon | Ask question (RAG) |
+| `POST` | `/api/v1/ask` | Bearer/Anon | Ask question (RAG, with history context) |
+| `GET` | `/api/v1/ask/history` | Bearer | Get recent chat messages |
 | `GET` | `/api/v1/health` | Public | Health check |
 
 ### gRPC Services
