@@ -1,6 +1,6 @@
 from collections.abc import Generator
 
-from app.prompts.rag_prompt import build_rag_prompt
+from app.prompts.rag_prompt import build_rag_prompt, build_suggestions_prompt, parse_suggestions
 from app.services.gemini_service import gemini_service
 from app.services.qdrant_service import qdrant_service
 
@@ -54,6 +54,34 @@ class AskService:
         )
 
         yield from gemini_service.generate_answer_stream(prompt)
+
+    def suggest_questions(
+        self,
+        client_id: str,
+        document_id: str | None = None,
+        chat_history: list[tuple[str, str]] | None = None,
+    ) -> list[str]:
+        last_question = ""
+        if chat_history:
+            for role, content in reversed(chat_history):
+                if role == "user":
+                    last_question = content
+                    break
+
+        if last_question:
+            embedding_response = gemini_service.generate_embedding(last_question)
+            search_results = qdrant_service.search(
+                embedding_response.embedding,
+                client_id=client_id,
+                document_id=document_id,
+                limit=20,
+            )
+        else:
+            search_results = []
+
+        prompt = build_suggestions_prompt(search_results, chat_history)
+        text = gemini_service.generate_answer(prompt)
+        return parse_suggestions(text)
 
 
 ask_service = AskService()

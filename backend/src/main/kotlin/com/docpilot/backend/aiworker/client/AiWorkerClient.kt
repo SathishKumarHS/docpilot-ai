@@ -139,6 +139,39 @@ class AiWorkerClient(
         }
     }
 
+    fun suggestQuestions(
+        documentId: UUID?,
+        clientId: UUID,
+        chatHistory: List<Pair<String, String>> = emptyList(),
+    ): List<String> {
+        return try {
+            val protoRequest = Aiworker.SuggestQuestionsRequest.newBuilder()
+                .apply { documentId?.let { setDocumentId(it.toString()) } }
+                .addAllChatHistory(chatHistory.map { (role, content) ->
+                    Aiworker.ChatMessage.newBuilder()
+                        .setRole(
+                            when (role) {
+                                "user" -> Aiworker.MessageRole.USER
+                                "assistant" -> Aiworker.MessageRole.ASSISTANT
+                                else -> error("Unknown role: $role")
+                            }
+                        )
+                        .setContent(content)
+                        .build()
+                })
+                .build()
+
+            val response = stub.withInterceptors(
+                MetadataInterceptor("x-client-id", clientId.toString()),
+            ).suggestQuestions(protoRequest)
+
+            response.questionsList
+        } catch (e: StatusRuntimeException) {
+            log.error("AI Worker gRPC error: {}", e.status.description)
+            throw AiWorkerException(e.status.description ?: "Unknown gRPC error", e)
+        }
+    }
+
     fun deleteDocument(
         documentId: UUID,
         clientId: UUID,

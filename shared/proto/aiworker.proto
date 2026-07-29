@@ -6,6 +6,7 @@ service AiWorkerService {
   rpc IndexDocument(IndexDocumentRequest) returns (IndexDocumentResponse);
   rpc Ask(AskRequest) returns (AskResponse);
   rpc AskStream(AskRequest) returns (stream AskStreamResponse);
+  rpc SuggestQuestions(SuggestQuestionsRequest) returns (SuggestQuestionsResponse);
   rpc DeleteDocument(DeleteDocumentRequest) returns (DeleteDocumentResponse);
 }
 
@@ -48,6 +49,15 @@ message AskResponse {
 message AskStreamResponse {
   string token = 1;
   bool done = 2;
+}
+
+message SuggestQuestionsRequest {
+  string document_id = 1;
+  repeated ChatMessage chat_history = 2;
+}
+
+message SuggestQuestionsResponse {
+  repeated string questions = 1;
 }
 
 message DeleteDocumentRequest {

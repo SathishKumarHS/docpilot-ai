@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { Send, ArrowLeft, Sparkles, FileText, User, Bot, Globe } from "lucide-react"
+import { Send, ArrowLeft, Sparkles, FileText, User, Bot, Globe, Lightbulb } from "lucide-react"
 import { apiFetch, getAccessToken, getAnonymousToken } from "../lib/auth.ts"
 import AuthControls from "../components/AuthControls.tsx"
 
@@ -44,9 +44,34 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [streaming, setStreaming] = useState(false)
+  const [suggestions, setSuggestions] = useState<Map<number, string[]>>(new Map())
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false)
   const streamingStarted = useRef(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  async function loadSuggestions(messageIndex: number) {
+    setSuggestionsLoading(true)
+    try {
+      const res = await apiFetch(`/api/v1/ask/suggest`, {
+        method: "POST",
+        body: JSON.stringify({ document_id: documentId }),
+      })
+      if (!res.ok) return
+      const data: { questions: string[] } = await res.json()
+      if (data.questions.length > 0) {
+        setSuggestions(new Map([[messageIndex, data.questions]]))
+      }
+    } catch {
+      // silently ignore — suggestions are non-critical
+    } finally {
+      setSuggestionsLoading(false)
+    }
+  }
+
+  function handleSuggestionClick(q: string) {
+    handleSend(q)
+  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -82,9 +107,11 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
     }
   }
 
-  async function handleSend() {
-    const text = inputValue.trim()
+  async function handleSend(question?: string) {
+    const text = (question ?? inputValue).trim()
     if (!text || isLoading) return
+
+    const assistantMsgIndex = messages.length + 1
 
     setInputValue("")
     if (inputRef.current) {
@@ -157,6 +184,7 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
     } finally {
       setStreaming(false)
       setIsLoading(false)
+      loadSuggestions(assistantMsgIndex)
     }
   }
 
@@ -213,16 +241,63 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
               </div>
             )}
 
-            <div
-              className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${
-                msg.role === "user"
-                  ? "bg-primary text-primary-foreground rounded-tr-sm"
-                  : "bg-card text-card-foreground border border-border/50 rounded-tl-sm"
-              }`}
-            >
-              {msg.content}
-              {streaming && index === messages.length - 1 && msg.role === "assistant" && (
-                <span className="inline-block w-[1px] h-4 bg-foreground ml-0.5 animate-pulse" />
+            <div className="flex flex-col gap-2 max-w-[85%]">
+              <div
+                className={`rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${
+                  msg.role === "user"
+                    ? "bg-primary text-primary-foreground rounded-tr-sm"
+                    : "bg-card text-card-foreground border border-border/50 rounded-tl-sm"
+                }`}
+              >
+                {msg.content}
+                {streaming && index === messages.length - 1 && msg.role === "assistant" && (
+                  <span className="inline-block w-[1px] h-4 bg-foreground ml-0.5 animate-pulse" />
+                )}
+              </div>
+
+              {msg.role === "assistant" && index === messages.length - 1 && !streaming && (
+                <>
+                  {suggestionsLoading && (
+                    <div className="flex flex-wrap gap-2 mt-1 ml-1">
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="h-7 w-32 rounded-full bg-muted/50 animate-pulse"
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {!suggestionsLoading && suggestions.get(index) && suggestions.get(index)!.length > 0 && (
+                    <div className="flex flex-col gap-2 mt-1 ml-1">
+                      <div className="flex items-center gap-1.5">
+                        <Lightbulb className="h-3 w-3 text-amber-500" />
+                        <span className="text-[11px] text-muted-foreground/60 font-medium uppercase tracking-wider">
+                          Ask a follow-up
+                        </span>
+                        <button
+                          onClick={() => {
+                            setSuggestions(new Map())
+                          }}
+                          className="ml-auto text-muted-foreground/30 hover:text-muted-foreground/60 transition-colors"
+                        >
+                          <span className="text-[11px]">✕</span>
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {suggestions.get(index)!.map((q, qi) => (
+                          <button
+                            key={qi}
+                            onClick={() => handleSuggestionClick(q)}
+                            style={{ animationDelay: `${qi * 80}ms` }}
+                            className="animate-fade-in text-xs bg-muted/50 hover:bg-primary/10 hover:text-primary hover:border-primary/30 text-muted-foreground rounded-full px-3 py-1.5 border border-border/50 transition-all duration-200 active:scale-95"
+                          >
+                            {q}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 

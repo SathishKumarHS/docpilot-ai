@@ -79,6 +79,22 @@ class AiWorkerGrpcServicer(aiworker_pb2_grpc.AiWorkerServiceServicer):
 
         yield aiworker_pb2.AskStreamResponse(done=True)
 
+    def SuggestQuestions(self, request, context):
+        if not _authenticated(context):
+            return aiworker_pb2.SuggestQuestionsResponse()
+
+        client_id = _get_client_id(context)
+
+        chat_history = [(MessageRole.Name(m.role).lower(), m.content) for m in request.chat_history]
+
+        questions = ask_service.suggest_questions(
+            client_id=client_id,
+            document_id=request.document_id or None,
+            chat_history=chat_history,
+        )
+
+        return aiworker_pb2.SuggestQuestionsResponse(questions=questions)
+
     def DeleteDocument(self, request, context):
         if not _authenticated(context):
             return aiworker_pb2.DeleteDocumentResponse(deleted=False)

@@ -1,3 +1,5 @@
+import re
+
 from app.models.search import SearchResult
 
 
@@ -43,3 +45,50 @@ Question:
 
 Answer:
 """
+
+
+def build_suggestions_prompt(
+    search_results: list[SearchResult],
+    chat_history: list[tuple[str, str]] | None = None,
+) -> str:
+    context = "\n\n".join(
+        result.text for result in search_results
+    )
+
+    history_block = ""
+    if chat_history:
+        formatted = "\n".join(
+            f"{'User' if role == 'user' else 'Assistant'}: {content}"
+            for role, content in chat_history[-5:]
+        )
+        history_block = f"""
+Conversation history:
+{formatted}
+
+"""
+
+    return f"""
+You are an AI assistant that suggests follow-up questions about the user's documents.
+
+Review the document excerpts and conversation below. Suggest 3-5 questions that:
+- Can be answered from the document excerpts provided
+- Dig deeper into topics the user has already asked about
+- Cover important points the user hasn't asked about yet
+
+Return each question on a new line, numbered 1-5. Do not include any other text.
+
+{history_block}Document excerpts:
+{context if context else "(No document content available — suggest general questions about what the user might want to know about their documents.)"}
+
+Suggested questions:
+"""
+
+
+def parse_suggestions(text: str) -> list[str]:
+    questions = []
+    for line in text.strip().split("\n"):
+        line = line.strip()
+        line = re.sub(r"^\d+[\.\)]\s*", "", line).strip()
+        if line and not line.startswith("#"):
+            questions.append(line)
+    return questions[:5]

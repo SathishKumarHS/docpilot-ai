@@ -4,6 +4,7 @@ import com.docpilot.backend.aiworker.client.AiWorkerClient
 import com.docpilot.backend.ask.dto.AskRequest
 import com.docpilot.backend.ask.dto.AskResponse
 import com.docpilot.backend.ask.dto.ChatMessageResponse
+import com.docpilot.backend.ask.dto.SuggestQuestionsResponse
 import com.docpilot.backend.ask.model.MessageRole
 import com.docpilot.backend.ask.service.ChatHistoryService
 import com.docpilot.backend.ask.service.QuestionLimitService
@@ -129,6 +130,27 @@ class Ask(
         }
 
         return emitter
+    }
+
+    @PostMapping("/suggest")
+    fun suggest(
+        request: HttpServletRequest,
+        @RequestBody body: Map<String, Any?>,
+    ): SuggestQuestionsResponse {
+        val owner = ownerResolver.resolve(request)
+        val isUser = owner.ownerType == OwnerType.USER
+        val documentId = (body["document_id"] as? String)?.let { UUID.fromString(it) }
+
+        val historyPairs = if (isUser) {
+            chatHistoryService.getHistory(owner.ownerId, documentId, PageRequest.of(0, 50))
+                .map { it.role.name.lowercase() to it.content }
+        } else {
+            emptyList()
+        }
+
+        val questions = aiWorkerClient.suggestQuestions(documentId, owner.ownerId, historyPairs)
+
+        return SuggestQuestionsResponse(questions = questions)
     }
 }
 
