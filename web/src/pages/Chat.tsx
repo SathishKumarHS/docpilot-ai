@@ -344,7 +344,7 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
               className="flex-1 bg-transparent resize-none outline-none text-sm py-2 max-h-40 placeholder:text-muted-foreground/50"
             />
             <button
-              onClick={handleSend}
+              onClick={() => handleSend()}
               disabled={!inputValue.trim() || isLoading}
               className="p-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0 shadow-sm active:scale-95"
             >
