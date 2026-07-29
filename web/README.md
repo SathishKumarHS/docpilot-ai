@@ -1,32 +1,46 @@
-# React + TypeScript + Vite
+# DocPilot Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React 19 SPA with TypeScript 6, Vite 8, and Tailwind CSS 3. The user-facing interface for document upload, management, and AI chat.
 
-Currently, two official plugins are available:
+## Tech
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **UI:** React 19, TypeScript 6, Vite 8
+- **Styling:** Tailwind CSS 3
+- **Icons:** Lucide React
+- **Routing:** React Router 7
+- **Linting:** Oxlint
+- **Dev proxy:** Vite proxies `/api` and `/oauth2` to `localhost:8080`
 
-## React Compiler
+## Project structure
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```
+web/src/
+├── components/    # Shared UI components (AuthControls, etc.)
+├── pages/         # Route pages (Landing, Chat, Login, Register, Documents, Upload)
+├── lib/           # Auth utils, API client
+└── assets/        # Static assets
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Running
+
+```bash
+npm install
+npm run dev          # http://localhost:5173
+npm run build        # Production build
+npm run lint         # Oxlint
+```
+
+## Pages
+
+| Route | Description |
+|-------|-------------|
+| `/` | Landing page with sign-up/login and anonymous entry |
+| `/login` | Email/password or Google OAuth2 login |
+| `/register` | Account registration |
+| `/upload` | PDF upload and chunking status |
+| `/documents` | Document list with delete |
+| `/chat` | Global or per-document AI chat with conversation history |
+
+## Proxy
+
+Vite proxies `/api/*` → `http://localhost:8080` and `/oauth2/*` → `http://localhost:8080` in dev mode. No CORS issues during local development.
