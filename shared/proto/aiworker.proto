@@ -5,6 +5,7 @@ package aiworker;
 service AiWorkerService {
   rpc IndexDocument(IndexDocumentRequest) returns (IndexDocumentResponse);
   rpc Ask(AskRequest) returns (AskResponse);
+  rpc AskStream(AskRequest) returns (stream AskStreamResponse);
   rpc DeleteDocument(DeleteDocumentRequest) returns (DeleteDocumentResponse);
 }
 
@@ -42,6 +43,11 @@ message AskRequest {
 
 message AskResponse {
   string answer = 1;
+}
+
+message AskStreamResponse {
+  string token = 1;
+  bool done = 2;
 }
 
 message DeleteDocumentRequest {

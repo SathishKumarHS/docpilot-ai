@@ -1,4 +1,7 @@
+from collections.abc import Generator
+
 from google.genai import errors as genai_errors
+from google.genai.types import GenerateContentResponse
 
 from app.clients.gemini_client import client
 from app.exceptions import EmbeddingError, AnswerGenerationError
@@ -58,6 +61,20 @@ class GeminiService:
             raise AnswerGenerationError(str(e))
 
         return response.text
+
+    def generate_answer_stream(self, prompt: str) -> Generator[str, None, None]:
+        try:
+            stream: GenerateContentResponse = client.models.generate_content_stream(
+                model="gemini-3.5-flash",
+                contents=prompt,
+            )
+            for chunk in stream:
+                if chunk.text:
+                    yield chunk.text
+        except genai_errors.ClientError as e:
+            raise AnswerGenerationError(f"Gemini API error: {e.message}")
+        except Exception as e:
+            raise AnswerGenerationError(str(e))
 
 
 gemini_service = GeminiService()

@@ -24,15 +24,15 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0e\x61iworker.proto\x12\x08\x61iworker\"L\n\x14IndexDocumentRequest\x12\x13\n\x0b\x64ocument_id\x18\x01 \x01(\t\x12\x1f\n\x06\x63hunks\x18\x02 \x03(\x0b\x32\x0f.aiworker.Chunk\"<\n\x05\x43hunk\x12\x10\n\x08\x63hunk_id\x18\x01 \x01(\t\x12\x13\n\x0b\x63hunk_index\x18\x02 \x01(\x05\x12\x0c\n\x04text\x18\x03 \x01(\t\"/\n\x15IndexDocumentResponse\x12\x16\n\x0eindexed_chunks\x18\x01 \x01(\x05\"C\n\x0b\x43hatMessage\x12#\n\x04role\x18\x01 \x01(\x0e\x32\x15.aiworker.MessageRole\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\"u\n\nAskRequest\x12\x10\n\x08question\x18\x01 \x01(\t\x12\x18\n\x0b\x64ocument_id\x18\x02 \x01(\tH\x00\x88\x01\x01\x12+\n\x0c\x63hat_history\x18\x03 \x03(\x0b\x32\x15.aiworker.ChatMessageB\x0e\n\x0c_document_id\"\x1d\n\x0b\x41skResponse\x12\x0e\n\x06\x61nswer\x18\x01 \x01(\t\",\n\x15\x44\x65leteDocumentRequest\x12\x13\n\x0b\x64ocument_id\x18\x01 \x01(\t\")\n\x16\x44\x65leteDocumentResponse\x12\x0f\n\x07\x64\x65leted\x18\x01 \x01(\x08*D\n\x0bMessageRole\x12\x1c\n\x18MESSAGE_ROLE_UNSPECIFIED\x10\x00\x12\x08\n\x04USER\x10\x01\x12\r\n\tASSISTANT\x10\x02\x32\xec\x01\n\x0f\x41iWorkerService\x12P\n\rIndexDocument\x12\x1e.aiworker.IndexDocumentRequest\x1a\x1f.aiworker.IndexDocumentResponse\x12\x32\n\x03\x41sk\x12\x14.aiworker.AskRequest\x1a\x15.aiworker.AskResponse\x12S\n\x0e\x44\x65leteDocument\x12\x1f.aiworker.DeleteDocumentRequest\x1a .aiworker.DeleteDocumentResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0e\x61iworker.proto\x12\x08\x61iworker\"L\n\x14IndexDocumentRequest\x12\x13\n\x0b\x64ocument_id\x18\x01 \x01(\t\x12\x1f\n\x06\x63hunks\x18\x02 \x03(\x0b\x32\x0f.aiworker.Chunk\"<\n\x05\x43hunk\x12\x10\n\x08\x63hunk_id\x18\x01 \x01(\t\x12\x13\n\x0b\x63hunk_index\x18\x02 \x01(\x05\x12\x0c\n\x04text\x18\x03 \x01(\t\"/\n\x15IndexDocumentResponse\x12\x16\n\x0eindexed_chunks\x18\x01 \x01(\x05\"C\n\x0b\x43hatMessage\x12#\n\x04role\x18\x01 \x01(\x0e\x32\x15.aiworker.MessageRole\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\"u\n\nAskRequest\x12\x10\n\x08question\x18\x01 \x01(\t\x12\x18\n\x0b\x64ocument_id\x18\x02 \x01(\tH\x00\x88\x01\x01\x12+\n\x0c\x63hat_history\x18\x03 \x03(\x0b\x32\x15.aiworker.ChatMessageB\x0e\n\x0c_document_id\"\x1d\n\x0b\x41skResponse\x12\x0e\n\x06\x61nswer\x18\x01 \x01(\t\"0\n\x11\x41skStreamResponse\x12\r\n\x05token\x18\x01 \x01(\t\x12\x0c\n\x04\x64one\x18\x02 \x01(\x08\",\n\x15\x44\x65leteDocumentRequest\x12\x13\n\x0b\x64ocument_id\x18\x01 \x01(\t\")\n\x16\x44\x65leteDocumentResponse\x12\x0f\n\x07\x64\x65leted\x18\x01 \x01(\x08*D\n\x0bMessageRole\x12\x1c\n\x18MESSAGE_ROLE_UNSPECIFIED\x10\x00\x12\x08\n\x04USER\x10\x01\x12\r\n\tASSISTANT\x10\x02\x32\xae\x02\n\x0f\x41iWorkerService\x12P\n\rIndexDocument\x12\x1e.aiworker.IndexDocumentRequest\x1a\x1f.aiworker.IndexDocumentResponse\x12\x32\n\x03\x41sk\x12\x14.aiworker.AskRequest\x1a\x15.aiworker.AskResponse\x12@\n\tAskStream\x12\x14.aiworker.AskRequest\x1a\x1b.aiworker.AskStreamResponse0\x01\x12S\n\x0e\x44\x65leteDocument\x12\x1f.aiworker.DeleteDocumentRequest\x1a .aiworker.DeleteDocumentResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'aiworker_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_MESSAGEROLE']._serialized_start=525
-  _globals['_MESSAGEROLE']._serialized_end=593
+  _globals['_MESSAGEROLE']._serialized_start=575
+  _globals['_MESSAGEROLE']._serialized_end=643
   _globals['_INDEXDOCUMENTREQUEST']._serialized_start=28
   _globals['_INDEXDOCUMENTREQUEST']._serialized_end=104
   _globals['_CHUNK']._serialized_start=106
@@ -45,10 +45,12 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_ASKREQUEST']._serialized_end=403
   _globals['_ASKRESPONSE']._serialized_start=405
   _globals['_ASKRESPONSE']._serialized_end=434
-  _globals['_DELETEDOCUMENTREQUEST']._serialized_start=436
-  _globals['_DELETEDOCUMENTREQUEST']._serialized_end=480
-  _globals['_DELETEDOCUMENTRESPONSE']._serialized_start=482
-  _globals['_DELETEDOCUMENTRESPONSE']._serialized_end=523
-  _globals['_AIWORKERSERVICE']._serialized_start=596
-  _globals['_AIWORKERSERVICE']._serialized_end=832
+  _globals['_ASKSTREAMRESPONSE']._serialized_start=436
+  _globals['_ASKSTREAMRESPONSE']._serialized_end=484
+  _globals['_DELETEDOCUMENTREQUEST']._serialized_start=486
+  _globals['_DELETEDOCUMENTREQUEST']._serialized_end=530
+  _globals['_DELETEDOCUMENTRESPONSE']._serialized_start=532
+  _globals['_DELETEDOCUMENTRESPONSE']._serialized_end=573
+  _globals['_AIWORKERSERVICE']._serialized_start=646
+  _globals['_AIWORKERSERVICE']._serialized_end=948
 # @@protoc_insertion_point(module_scope)

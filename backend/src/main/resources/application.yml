@@ -75,6 +75,9 @@ docpilot:
       "POST:/api/v1/ask":
         capacity: 5
         period: 1m
+      "POST:/api/v1/ask/stream":
+        capacity: 5
+        period: 1m
       "GET:/api/v1/ask/history":
         capacity: 10
         period: 1m

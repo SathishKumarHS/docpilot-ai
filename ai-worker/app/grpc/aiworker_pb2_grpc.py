@@ -44,6 +44,11 @@ class AiWorkerServiceStub:
                 request_serializer=aiworker__pb2.AskRequest.SerializeToString,
                 response_deserializer=aiworker__pb2.AskResponse.FromString,
                 _registered_method=True)
+        self.AskStream = channel.unary_stream(
+                '/aiworker.AiWorkerService/AskStream',
+                request_serializer=aiworker__pb2.AskRequest.SerializeToString,
+                response_deserializer=aiworker__pb2.AskStreamResponse.FromString,
+                _registered_method=True)
         self.DeleteDocument = channel.unary_unary(
                 '/aiworker.AiWorkerService/DeleteDocument',
                 request_serializer=aiworker__pb2.DeleteDocumentRequest.SerializeToString,
@@ -61,6 +66,12 @@ class AiWorkerServiceServicer:
         raise NotImplementedError('Method not implemented!')
 
     def Ask(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AskStream(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -84,6 +95,11 @@ def add_AiWorkerServiceServicer_to_server(servicer, server):
                     servicer.Ask,
                     request_deserializer=aiworker__pb2.AskRequest.FromString,
                     response_serializer=aiworker__pb2.AskResponse.SerializeToString,
+            ),
+            'AskStream': grpc.unary_stream_rpc_method_handler(
+                    servicer.AskStream,
+                    request_deserializer=aiworker__pb2.AskRequest.FromString,
+                    response_serializer=aiworker__pb2.AskStreamResponse.SerializeToString,
             ),
             'DeleteDocument': grpc.unary_unary_rpc_method_handler(
                     servicer.DeleteDocument,
@@ -145,6 +161,33 @@ class AiWorkerService:
             '/aiworker.AiWorkerService/Ask',
             aiworker__pb2.AskRequest.SerializeToString,
             aiworker__pb2.AskResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def AskStream(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/aiworker.AiWorkerService/AskStream',
+            aiworker__pb2.AskRequest.SerializeToString,
+            aiworker__pb2.AskStreamResponse.FromString,
             options,
             channel_credentials,
             insecure,

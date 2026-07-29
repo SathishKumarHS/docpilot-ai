@@ -43,6 +43,8 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [streaming, setStreaming] = useState(false)
+  const streamingStarted = useRef(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -91,9 +93,11 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
 
     setMessages((prev) => [...prev, { role: "user", content: text }])
     setIsLoading(true)
+    streamingStarted.current = false
+    setStreaming(false)
 
     try {
-      const response = await apiFetch("/api/v1/ask", {
+      const response = await apiFetch("/api/v1/ask/stream", {
         method: "POST",
         body: JSON.stringify({
           question: text,
@@ -101,25 +105,57 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
         }),
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to get answer")
+      if (!response.ok) throw new Error("Failed to get answer")
+
+      const reader = response.body!.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ""
+
+      outer: while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split("\n")
+        buffer = lines.pop() || ""
+
+        for (const line of lines) {
+          if (line.startsWith("data:")) {
+            try {
+              const payload = JSON.parse(line.slice(5))
+              if (payload.done) break outer
+              if (payload.token) {
+                if (!streamingStarted.current) {
+                  streamingStarted.current = true
+                  setStreaming(true)
+                  setMessages((prev) => [...prev, { role: "assistant", content: payload.token }])
+                } else {
+                  setMessages((prev) => {
+                    const updated = [...prev]
+                    const last = updated[updated.length - 1]
+                    updated[updated.length - 1] = { ...last, content: last.content + payload.token }
+                    return updated
+                  })
+                }
+              }
+            } catch {
+              // skip malformed events
+            }
+          }
+        }
       }
-
-      const data = await response.json()
-
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: data.answer },
-      ])
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "Sorry, I couldn't process your question. Please try again.",
-        },
-      ])
+      if (!streamingStarted.current) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: "Sorry, I couldn't process your question. Please try again.",
+          },
+        ])
+      }
     } finally {
+      setStreaming(false)
       setIsLoading(false)
     }
   }
@@ -185,6 +221,9 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
               }`}
             >
               {msg.content}
+              {streaming && index === messages.length - 1 && msg.role === "assistant" && (
+                <span className="inline-block w-[1px] h-4 bg-foreground ml-0.5 animate-pulse" />
+              )}
             </div>
 
             {msg.role === "user" && (
@@ -195,7 +234,7 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
           </div>
         ))}
 
-        {isLoading && (
+        {isLoading && !streaming && (
           <div className="flex gap-3 justify-start">
             <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 shadow-sm">
               <Bot className="h-4 w-4 text-primary-foreground" />
