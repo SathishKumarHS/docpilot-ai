@@ -7,6 +7,7 @@ service AiWorkerService {
   rpc Ask(AskRequest) returns (AskResponse);
   rpc AskStream(AskRequest) returns (stream AskStreamResponse);
   rpc SuggestQuestions(SuggestQuestionsRequest) returns (SuggestQuestionsResponse);
+  rpc SummarizeDocument(SummarizeDocumentRequest) returns (SummarizeDocumentResponse);
   rpc DeleteDocument(DeleteDocumentRequest) returns (DeleteDocumentResponse);
 }
 
@@ -58,6 +59,14 @@ message SuggestQuestionsRequest {
 
 message SuggestQuestionsResponse {
   repeated string questions = 1;
+}
+
+message SummarizeDocumentRequest {
+  repeated Chunk chunks = 1;
+}
+
+message SummarizeDocumentResponse {
+  string summary = 1;
 }
 
 message DeleteDocumentRequest {

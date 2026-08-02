@@ -79,6 +79,14 @@ class AiWorkerGrpcServicer(aiworker_pb2_grpc.AiWorkerServiceServicer):
 
         yield aiworker_pb2.AskStreamResponse(done=True)
 
+    def SummarizeDocument(self, request, context):
+        if not _authenticated(context):
+            return aiworker_pb2.SummarizeDocumentResponse()
+
+        chunks = [c.text for c in request.chunks]
+        summary = ask_service.summarize(chunks)
+        return aiworker_pb2.SummarizeDocumentResponse(summary=summary)
+
     def SuggestQuestions(self, request, context):
         if not _authenticated(context):
             return aiworker_pb2.SuggestQuestionsResponse()

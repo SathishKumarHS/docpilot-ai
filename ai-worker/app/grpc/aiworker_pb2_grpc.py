@@ -54,6 +54,11 @@ class AiWorkerServiceStub:
                 request_serializer=aiworker__pb2.SuggestQuestionsRequest.SerializeToString,
                 response_deserializer=aiworker__pb2.SuggestQuestionsResponse.FromString,
                 _registered_method=True)
+        self.SummarizeDocument = channel.unary_unary(
+                '/aiworker.AiWorkerService/SummarizeDocument',
+                request_serializer=aiworker__pb2.SummarizeDocumentRequest.SerializeToString,
+                response_deserializer=aiworker__pb2.SummarizeDocumentResponse.FromString,
+                _registered_method=True)
         self.DeleteDocument = channel.unary_unary(
                 '/aiworker.AiWorkerService/DeleteDocument',
                 request_serializer=aiworker__pb2.DeleteDocumentRequest.SerializeToString,
@@ -88,6 +93,12 @@ class AiWorkerServiceServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SummarizeDocument(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def DeleteDocument(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -116,6 +127,11 @@ def add_AiWorkerServiceServicer_to_server(servicer, server):
                     servicer.SuggestQuestions,
                     request_deserializer=aiworker__pb2.SuggestQuestionsRequest.FromString,
                     response_serializer=aiworker__pb2.SuggestQuestionsResponse.SerializeToString,
+            ),
+            'SummarizeDocument': grpc.unary_unary_rpc_method_handler(
+                    servicer.SummarizeDocument,
+                    request_deserializer=aiworker__pb2.SummarizeDocumentRequest.FromString,
+                    response_serializer=aiworker__pb2.SummarizeDocumentResponse.SerializeToString,
             ),
             'DeleteDocument': grpc.unary_unary_rpc_method_handler(
                     servicer.DeleteDocument,
@@ -231,6 +247,33 @@ class AiWorkerService:
             '/aiworker.AiWorkerService/SuggestQuestions',
             aiworker__pb2.SuggestQuestionsRequest.SerializeToString,
             aiworker__pb2.SuggestQuestionsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SummarizeDocument(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/aiworker.AiWorkerService/SummarizeDocument',
+            aiworker__pb2.SummarizeDocumentRequest.SerializeToString,
+            aiworker__pb2.SummarizeDocumentResponse.FromString,
             options,
             channel_credentials,
             insecure,

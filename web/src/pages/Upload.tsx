@@ -77,7 +77,9 @@ export default function UploadPage() {
         return
       }
 
-      navigate(`/chat?documentId=${encodeURIComponent(data.id)}&fileName=${encodeURIComponent(data.fileName)}`)
+      navigate(`/chat?documentId=${encodeURIComponent(data.id)}&fileName=${encodeURIComponent(data.fileName)}`, {
+        state: { summary: data.summary },
+      })
     } catch {
       setError("Failed to upload document. Please try again.")
     } finally {

@@ -1,6 +1,7 @@
 package com.docpilot.backend.document.entity
 
 import com.docpilot.backend.auth.model.OwnerType
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
@@ -24,4 +25,7 @@ class DocumentEntity(
     var ownerType : OwnerType,
 
     var storageKey: String? = null,
+
+    @Column(columnDefinition = "TEXT")
+    var summary: String? = null,
 )

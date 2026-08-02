@@ -80,21 +80,30 @@ class DocumentService(
         }
         documentChunkRepository.saveAll(entities)
 
+        val chunkRequests = chunks.map {
+            ChunkRequest(chunkId = it.id, chunkIndex = it.chunkIndex, text = it.content)
+        }
+
         aiWorkerClient.indexDocument(
-            IndexDocumentRequest(
-                documentId = document.id,
-                chunks = chunks.map {
-                    ChunkRequest(chunkId = it.id, chunkIndex = it.chunkIndex, text = it.content)
-                }
-            ),
+            IndexDocumentRequest(documentId = document.id, chunks = chunkRequests),
             owner.ownerId
         )
+
+        val summary = try {
+            aiWorkerClient.summarizeDocument(chunkRequests, owner.ownerId)
+        } catch (e: Exception) {
+            log.warn("Failed to summarize document {}: {}", document.id, e.message)
+            null
+        }
+        documentEntity.summary = summary
+        documentRepository.save(documentEntity)
 
         return UploadDocumentResponse(
             id = document.id,
             fileName = document.fileName,
             size = file.size,
-            uploadedAt = document.uploadedAt
+            uploadedAt = document.uploadedAt,
+            summary = summary,
         )
     }
 
@@ -102,7 +111,7 @@ class DocumentService(
         return documentRepository
             .findByOwnerTypeAndOwnerId(owner.ownerType, owner.ownerId, pageable)
             .map {
-                DocumentResponse(id = it.id, fileName = it.fileName, size = it.size, uploadedAt = it.uploadedAt)
+                DocumentResponse(id = it.id, fileName = it.fileName, size = it.size, uploadedAt = it.uploadedAt, summary = it.summary)
             }
     }
 

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { ArrowLeft, FileText, MessageCircle, Trash2, Sparkles, Loader2, Globe, Upload } from "lucide-react"
+import { ArrowLeft, FileText, MessageCircle, Trash2, Sparkles, Loader2, Globe, Upload, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react"
 import { apiFetch, getAccessToken, getAnonymousToken } from "../lib/auth.ts"
 import AuthControls from "../components/AuthControls.tsx"
 
@@ -9,6 +9,7 @@ interface Document {
   fileName: string
   size: number
   uploadedAt: string
+  summary?: string | null
 }
 
 export default function Documents() {
@@ -16,15 +17,23 @@ export default function Documents() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const fetched = useRef(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [expandedSummaries, setExpandedSummaries] = useState<Set<string>>(new Set())
+
+  function toggleSummary(id: string) {
+    setExpandedSummaries((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   useEffect(() => {
     if (!getAccessToken() && !getAnonymousToken()) {
       navigate("/", { replace: true })
       return
     }
-    if (fetched.current) return
-    fetched.current = true
     fetchDocuments()
   }, [navigate])
 
@@ -43,6 +52,11 @@ export default function Documents() {
   }
 
   async function handleDelete(id: string) {
+    setDeleteConfirm(id)
+  }
+
+  async function confirmDelete(id: string) {
+    setDeleteConfirm(null)
     setDeletingId(id)
     try {
       const res = await apiFetch(`/api/v1/documents/${id}`, {
@@ -56,6 +70,10 @@ export default function Documents() {
     } finally {
       setDeletingId(null)
     }
+  }
+
+  function cancelDelete() {
+    setDeleteConfirm(null)
   }
 
   function handleChat(doc: Document) {
@@ -96,8 +114,24 @@ export default function Documents() {
 
       <main className="flex-1 p-6 max-w-3xl mx-auto w-full">
         {isLoading ? (
-          <div className="flex justify-center pt-20">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="space-y-3 pt-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-xl bg-muted/50 animate-pulse shrink-0" />
+                  <div className="flex-1 space-y-2.5">
+                    <div className="h-4 w-48 rounded bg-muted/50 animate-pulse" />
+                    <div className="h-3 w-16 rounded bg-muted/50 animate-pulse" />
+                    <div className="h-3 w-full rounded bg-muted/30 animate-pulse" />
+                    <div className="h-3 w-3/4 rounded bg-muted/30 animate-pulse" />
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <div className="h-9 w-16 rounded-lg bg-muted/50 animate-pulse" />
+                    <div className="h-9 w-16 rounded-lg bg-muted/50 animate-pulse" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : documents.length === 0 ? (
           <div className="text-center pt-20">
@@ -118,18 +152,36 @@ export default function Documents() {
             {documents.map((doc) => (
               <div
                 key={doc.id}
-                className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 hover:shadow-md transition-shadow"
+                className="rounded-xl border border-border bg-card p-4 hover:shadow-md transition-shadow"
               >
-                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <FileText className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{doc.fileName}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {(doc.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <FileText className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{doc.fileName}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {(doc.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                    {doc.summary && (
+                      <>
+                        <p className={`text-sm text-muted-foreground/70 mt-2 leading-relaxed ${!expandedSummaries.has(doc.id) ? "line-clamp-2" : ""}`}>
+                          {doc.summary}
+                        </p>
+                        <button
+                          onClick={() => toggleSummary(doc.id)}
+                          className="mt-1 inline-flex items-center gap-0.5 text-[11px] text-primary/60 hover:text-primary transition-colors"
+                        >
+                          {expandedSummaries.has(doc.id) ? (
+                            <><ChevronUp className="h-3 w-3" /> Show less</>
+                          ) : (
+                            <><ChevronDown className="h-3 w-3" /> Show more</>
+                          )}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={() => handleChat(doc)}
                     className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
@@ -137,21 +189,45 @@ export default function Documents() {
                     <MessageCircle className="h-4 w-4" />
                     Chat
                   </button>
-                  <button
-                    onClick={() => handleDelete(doc.id)}
-                    disabled={deletingId === doc.id}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-40"
-                  >
-                    {deletingId === doc.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                    Delete
-                  </button>
+                  {deleteConfirm === doc.id ? (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => confirmDelete(doc.id)}
+                        disabled={deletingId === doc.id}
+                        className="inline-flex items-center gap-1 rounded-lg bg-destructive/10 px-2.5 py-2 text-sm font-medium text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-40"
+                      >
+                        {deletingId === doc.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <AlertTriangle className="h-4 w-4" />
+                        )}
+                        Confirm
+                      </button>
+                      <button
+                        onClick={cancelDelete}
+                        className="inline-flex items-center gap-1 rounded-lg bg-muted px-2.5 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleDelete(doc.id)}
+                      disabled={deletingId === doc.id}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-40"
+                    >
+                      {deletingId === doc.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                      Delete
+                    </button>
+                  )}
                 </div>
               </div>
-            ))}
+            </div>
+          ))}
           </div>
         )}
       </main>

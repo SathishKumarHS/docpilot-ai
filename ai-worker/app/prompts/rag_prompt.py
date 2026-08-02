@@ -84,6 +84,19 @@ Suggested questions:
 """
 
 
+def build_summary_prompt(chunks: list[str]) -> str:
+    content = "\n\n".join(chunks)
+
+    return f"""
+Summarize the following document content in 3-5 sentences. Capture the main topic, key points, and any important conclusions.
+
+Document content:
+{content}
+
+Summary:
+"""
+
+
 def parse_suggestions(text: str) -> list[str]:
     questions = []
     for line in text.strip().split("\n"):

@@ -62,13 +62,15 @@ class DocumentServiceTest {
             listOf(DocumentChunk(id = UUID.randomUUID(), chunkIndex = 0, content = "document text"))
         )
         `when`(aiWorkerClient.indexDocument(anyNonNull(), anyNonNull())).thenReturn(IndexDocumentResponse(1))
+        `when`(aiWorkerClient.summarizeDocument(anyNonNull(), anyNonNull())).thenReturn("A short summary of the document.")
 
         val result = service.upload(file, owner)
 
         assertNotNull(result)
         assertEquals("test.pdf", result.fileName)
         assertEquals(1024L, result.size)
-        verify(documentRepository).save(anyNonNull<DocumentEntity>())
+        assertEquals("A short summary of the document.", result.summary)
+        verify(documentRepository, times(2)).save(anyNonNull<DocumentEntity>())
     }
 
     @Test

@@ -7,5 +7,6 @@ data class UploadDocumentResponse(
     val id: UUID,
     val fileName: String,
     val size: Long,
-    val uploadedAt: Instant
+    val uploadedAt: Instant,
+    val summary: String? = null,
 )

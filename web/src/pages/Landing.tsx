@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { Sparkles, Upload, LogOut, Loader2, Globe, FileText, MessageSquareText } from "lucide-react"
+import { Sparkles, Upload, LogOut, Loader2, Globe, FileText } from "lucide-react"
 import { isAuthenticated, getUser, clearAuth, startAnonymousSession, getAnonymousToken } from "../lib/auth.ts"
 
 export default function Landing() {
@@ -18,10 +18,6 @@ export default function Landing() {
     } catch {
       setLoading(false)
     }
-  }
-
-  function handleContinue() {
-    navigate("/upload")
   }
 
   return (
@@ -103,13 +99,22 @@ export default function Landing() {
           </div>
         ) : hasAnonSession ? (
           <>
-            <button
-              onClick={handleContinue}
-              className="inline-flex items-center gap-2.5 rounded-full bg-primary px-10 py-5 text-lg font-medium text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:shadow-xl hover:shadow-primary/40 hover:scale-105 active:scale-95 mt-4"
-            >
-              <MessageSquareText className="h-5 w-5" />
-              Continue Chatting
-            </button>
+            <div className="flex flex-col sm:flex-row items-center gap-4 mt-4">
+              <button
+                onClick={() => navigate("/chat")}
+                className="inline-flex items-center gap-2.5 rounded-full bg-primary px-8 py-4 text-base font-medium text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:shadow-xl hover:shadow-primary/40 hover:scale-105 active:scale-95"
+              >
+                <Globe className="h-5 w-5" />
+                Global Chat
+              </button>
+              <button
+                onClick={() => navigate("/documents")}
+                className="inline-flex items-center gap-2.5 rounded-full bg-secondary px-8 py-4 text-base font-medium text-foreground border border-border/50 transition-all hover:bg-secondary/80 hover:scale-105 active:scale-95"
+              >
+                <FileText className="h-5 w-5" />
+                My Documents
+              </button>
+            </div>
             <p className="text-sm text-muted-foreground mt-8">
               <Link to="/register" className="text-primary hover:underline font-medium">Sign up</Link> or{" "}
               <Link to="/login" className="text-primary hover:underline font-medium">Sign in</Link> to save your documents.

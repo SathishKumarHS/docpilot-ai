@@ -1,6 +1,6 @@
 from collections.abc import Generator
 
-from app.prompts.rag_prompt import build_rag_prompt, build_suggestions_prompt, parse_suggestions
+from app.prompts.rag_prompt import build_rag_prompt, build_suggestions_prompt, build_summary_prompt, parse_suggestions
 from app.services.gemini_service import gemini_service
 from app.services.qdrant_service import qdrant_service
 
@@ -82,6 +82,11 @@ class AskService:
         prompt = build_suggestions_prompt(search_results, chat_history)
         text = gemini_service.generate_answer(prompt)
         return parse_suggestions(text)
+
+
+    def summarize(self, chunks: list[str]) -> str:
+        prompt = build_summary_prompt(chunks)
+        return gemini_service.generate_answer(prompt)
 
 
 ask_service = AskService()

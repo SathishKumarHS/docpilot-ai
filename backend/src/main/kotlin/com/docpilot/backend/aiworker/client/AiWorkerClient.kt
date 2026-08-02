@@ -139,6 +139,26 @@ class AiWorkerClient(
         }
     }
 
+    fun summarizeDocument(
+        chunks: List<ChunkRequest>,
+        clientId: UUID,
+    ): String {
+        return try {
+            val protoRequest = Aiworker.SummarizeDocumentRequest.newBuilder()
+                .addAllChunks(chunks.map { it.toProto() })
+                .build()
+
+            val response = stub.withInterceptors(
+                MetadataInterceptor("x-client-id", clientId.toString()),
+            ).summarizeDocument(protoRequest)
+
+            response.summary
+        } catch (e: StatusRuntimeException) {
+            log.error("AI Worker gRPC error: {}", e.status.description)
+            throw AiWorkerException(e.status.description ?: "Unknown gRPC error", e)
+        }
+    }
+
     fun suggestQuestions(
         documentId: UUID?,
         clientId: UUID,

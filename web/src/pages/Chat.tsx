@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { Send, ArrowLeft, Sparkles, FileText, User, Bot, Globe, Lightbulb } from "lucide-react"
+import { Send, ArrowLeft, Sparkles, FileText, User, Bot, Globe, Lightbulb, ChevronDown, ChevronUp, X } from "lucide-react"
 import { apiFetch, getAccessToken, getAnonymousToken } from "../lib/auth.ts"
 import AuthControls from "../components/AuthControls.tsx"
 
@@ -38,9 +38,12 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
   const params = new URLSearchParams(location.search)
   const documentId = propDocumentId ?? params.get("documentId") ?? null
   const isGlobal = !documentId
-  const fileName = params.get("fileName") ?? (location.state as { fileName?: string } | null)?.fileName ?? "document.pdf"
+  const locState = location.state as { fileName?: string; summary?: string } | null
+  const fileName = params.get("fileName") ?? locState?.fileName ?? "document.pdf"
+  const documentSummary = locState?.summary ?? null
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [showSummary, setShowSummary] = useState(!!documentSummary)
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [streaming, setStreaming] = useState(false)
@@ -75,7 +78,11 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+  }, [messages, suggestions])
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
 
   function isRole(v: string): v is "user" | "assistant" {
     return v === "user" || v === "assistant"
@@ -215,18 +222,45 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
               <span className={`inline-block h-1.5 w-1.5 rounded-full ${isGlobal ? "bg-indigo-500" : "bg-emerald-500"}`} />
               {isGlobal ? "Global chat" : "Document chat"}
+              {documentSummary && (
+                <button
+                  onClick={() => setShowSummary(!showSummary)}
+                  className="ml-2 inline-flex items-center gap-0.5 text-[11px] text-primary/70 hover:text-primary transition-colors"
+                >
+                  {showSummary ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                  {showSummary ? "Hide summary" : "Show summary"}
+                </button>
+              )}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           <AuthControls />
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <span className="font-semibold text-sm hidden sm:inline">DocPilot AI</span>
         </div>
       </header>
+
+      {/* document summary */}
+      {documentSummary && showSummary && (
+        <div className="max-w-3xl mx-auto w-full px-4 pt-4">
+          <div className="rounded-xl border border-primary/10 bg-primary/5 p-3.5">
+            <div className="flex items-start gap-2.5">
+              <FileText className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-primary mb-1">Document Summary</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{documentSummary}</p>
+              </div>
+              <button
+                onClick={() => setShowSummary(false)}
+                className="p-0.5 rounded hover:bg-primary/10 text-muted-foreground/40 hover:text-muted-foreground transition-colors shrink-0"
+                title="Dismiss summary"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* messages */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-5 max-w-3xl mx-auto w-full scrollbar-thin">
