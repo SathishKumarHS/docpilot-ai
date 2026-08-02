@@ -53,7 +53,7 @@ class AiWorkerClient(
 
             IndexDocumentResponse(indexedChunks = response.indexedChunks)
         } catch (e: StatusRuntimeException) {
-            log.error("AI Worker gRPC error: {}", e.status.description)
+            log.error("indexDocument failed clientId={} documentId={} error={}", clientId, request.documentId, e.status.description)
             throw AiWorkerException(e.status.description ?: "Unknown gRPC error", e)
         }
     }
@@ -87,7 +87,7 @@ class AiWorkerClient(
 
             AskResponse(answer = response.answer)
         } catch (e: StatusRuntimeException) {
-            log.error("AI Worker gRPC error: {}", e.status.description)
+            log.error("ask failed clientId={} error={}", clientId, e.status.description)
             throw AiWorkerException(e.status.description ?: "Unknown gRPC error", e)
         }
     }
@@ -131,10 +131,10 @@ class AiWorkerClient(
                 }
             }
         } catch (e: StatusRuntimeException) {
-            log.error("AI Worker gRPC stream error: {}", e.status.description)
+            log.error("askStream failed clientId={} error={}", clientId, e.status.description)
             onError(AiWorkerException(e.status.description ?: "Unknown gRPC stream error", e))
         } catch (e: Exception) {
-            log.error("AI Worker gRPC stream error", e)
+            log.error("askStream failed clientId={}", clientId, e)
             onError(e)
         }
     }
@@ -154,7 +154,7 @@ class AiWorkerClient(
 
             response.summary
         } catch (e: StatusRuntimeException) {
-            log.error("AI Worker gRPC error: {}", e.status.description)
+            log.error("summarizeDocument failed clientId={} error={}", clientId, e.status.description)
             throw AiWorkerException(e.status.description ?: "Unknown gRPC error", e)
         }
     }
@@ -187,7 +187,7 @@ class AiWorkerClient(
 
             response.questionsList
         } catch (e: StatusRuntimeException) {
-            log.error("AI Worker gRPC error: {}", e.status.description)
+            log.error("suggestQuestions failed clientId={} error={}", clientId, e.status.description)
             throw AiWorkerException(e.status.description ?: "Unknown gRPC error", e)
         }
     }
@@ -205,7 +205,7 @@ class AiWorkerClient(
                 MetadataInterceptor("x-client-id", clientId.toString()),
             ).deleteDocument(protoRequest)
         } catch (e: StatusRuntimeException) {
-            log.error("AI Worker gRPC error: {}", e.status.description)
+            log.error("deleteDocument failed clientId={} documentId={} error={}", clientId, documentId, e.status.description)
             throw AiWorkerException(e.status.description ?: "Unknown gRPC error", e)
         }
     }

@@ -44,6 +44,11 @@ management:
       exposure:
         include: health
 
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
+    com.docpilot.backend: ${APP_LOG_LEVEL:INFO}
+
 feature-flags:
   refresh-interval-ms: 300000
   service-url: ${FEATURE_FLAG_SERVICE_URL:feature-flag:9090}

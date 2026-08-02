@@ -52,6 +52,7 @@ dependencies {
     implementation("io.grpc:grpc-stub")
     implementation("io.grpc:grpc-kotlin-stub")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
+    runtimeOnly("net.logstash.logback:logstash-logback-encoder:8.1")
 }
 
 protobuf {

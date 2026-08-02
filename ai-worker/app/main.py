@@ -3,6 +3,7 @@ from os import environ
 
 from fastapi import FastAPI
 
+from app.core.logging import get_logger, setup_logging
 from app.api.embedding import router as embedding_router
 from app.api.health import router as health_router
 from app.api.search import router as search_router
@@ -18,11 +19,15 @@ from app.grpc.service import serve_grpc
 from app.middleware.auth import ServiceKeyMiddleware
 from app.services.qdrant_service import qdrant_service
 
+setup_logging()
+
+log = get_logger(__name__)
+
 GRPC_PORT = int(environ.get("GRPC_PORT", "50051"))
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Starting AI Worker...")
+    log.info("Starting AI Worker")
 
     qdrant_service.create_collection()
 
@@ -31,7 +36,7 @@ async def lifespan(app: FastAPI):
     yield
 
     grpc_task.cancel()
-    print("Stopping AI Worker...")
+    log.info("Stopping AI Worker")
 
 app = FastAPI(
     title="DocPilot AI Worker",

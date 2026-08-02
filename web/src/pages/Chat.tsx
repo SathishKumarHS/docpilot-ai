@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { Send, ArrowLeft, Sparkles, FileText, User, Bot, Globe, Lightbulb, ChevronDown, ChevronUp, X } from "lucide-react"
 import { apiFetch, getAccessToken, getAnonymousToken } from "../lib/auth.ts"
+import { logError, logWarn } from "../lib/logger.ts"
 import AuthControls from "../components/AuthControls.tsx"
 
 interface ChatMessage {
@@ -65,8 +66,8 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
       if (data.questions.length > 0) {
         setSuggestions(new Map([[messageIndex, data.questions]]))
       }
-    } catch {
-      // silently ignore — suggestions are non-critical
+    } catch (error) {
+      logWarn("Failed to load suggestions", { error })
     } finally {
       setSuggestionsLoading(false)
     }
@@ -99,7 +100,8 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
         setMessages(data.length > 0
           ? data.map(m => ({ role: isRole(m.role) ? m.role : "assistant", content: m.content }))
           : [welcomeMessage(isGlobal, fileName)])
-      } catch {
+      } catch (error) {
+        logWarn("Failed to load chat history", { error })
         setMessages([welcomeMessage(isGlobal, fileName)])
       }
     }
@@ -172,13 +174,14 @@ export default function Chat({ documentId: propDocumentId }: ChatProps) {
                   })
                 }
               }
-            } catch {
-              // skip malformed events
+            } catch (error) {
+              logWarn("Skipped malformed SSE event", { error, line })
             }
           }
         }
       }
-    } catch {
+    } catch (error) {
+      logError("Stream request failed", error, { question: text })
       if (!streamingStarted.current) {
         setMessages((prev) => [
           ...prev,

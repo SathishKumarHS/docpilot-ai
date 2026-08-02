@@ -13,6 +13,7 @@ import com.docpilot.backend.auth.resolver.OwnerResolver
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import kotlin.concurrent.thread
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
@@ -32,6 +33,7 @@ class Ask(
     private val questionLimitService: QuestionLimitService,
     private val chatHistoryService: ChatHistoryService,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
 
     @GetMapping("/history")
     fun getHistory(
@@ -57,6 +59,8 @@ class Ask(
 
         val documentId = askRequest.documentId
 
+        log.info("ask request ownerType={} documentId={} questionLength={}", owner.ownerType, documentId, askRequest.question.length)
+
         val historyPairs = if (isUser) {
             chatHistoryService.getHistory(owner.ownerId, documentId, PageRequest.of(0, 50))
                 .map { it.role.name.lowercase() to it.content }
@@ -74,6 +78,8 @@ class Ask(
             chatHistoryService.addMessage(owner.ownerId, documentId, MessageRole.ASSISTANT, response.answer)
         }
 
+        log.info("ask completed ownerType={} documentId={} answerLength={}", owner.ownerType, documentId, response.answer.length)
+
         return AskResponse(answer = response.answer)
     }
 
@@ -88,6 +94,8 @@ class Ask(
         questionLimitService.checkAndIncrement(owner.ownerId, tier)
 
         val documentId = askRequest.documentId
+
+        log.info("stream request ownerType={} documentId={} questionLength={}", owner.ownerType, documentId, askRequest.question.length)
 
         val historyPairs = if (isUser) {
             chatHistoryService.getHistory(owner.ownerId, documentId, PageRequest.of(0, 50))
@@ -117,14 +125,17 @@ class Ask(
                         if (isUser) {
                             chatHistoryService.addMessage(owner.ownerId, documentId, MessageRole.ASSISTANT, fullAnswer.toString())
                         }
+                        log.info("stream completed ownerType={} documentId={} answerLength={}", owner.ownerType, documentId, fullAnswer.length)
                         emitter.send(SseEmitter.event().data("""{"done":true}"""))
                         emitter.complete()
                     },
                     onError = { error ->
+                        log.error("stream failed ownerType={} documentId={} error={}", owner.ownerType, documentId, error.message, error)
                         emitter.completeWithError(error)
                     },
                 )
             } catch (e: Exception) {
+                log.error("stream failed ownerType={} documentId={} error={}", owner.ownerType, documentId, e.message, e)
                 emitter.completeWithError(e)
             }
         }
@@ -149,6 +160,8 @@ class Ask(
         }
 
         val questions = aiWorkerClient.suggestQuestions(documentId, owner.ownerId, historyPairs)
+
+        log.info("suggest completed ownerType={} documentId={} count={}", owner.ownerType, documentId, questions.size)
 
         return SuggestQuestionsResponse(questions = questions)
     }

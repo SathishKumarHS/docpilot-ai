@@ -9,6 +9,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    logging: &default-logging
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -21,6 +26,7 @@ services:
       - "6333:6333"
     volumes:
       - qdrant_data:/qdrant/storage
+    logging: *default-logging
 
   redis:
     image: redis:7-alpine
@@ -28,6 +34,7 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+    logging: *default-logging
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -45,6 +52,7 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - minio-data:/data
+    logging: *default-logging
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s
@@ -59,6 +67,7 @@ services:
     environment:
       SERVICE_API_KEY: ${SERVICE_API_KEY:-}
       GRPC_PORT: 9090
+    logging: *default-logging
     healthcheck:
       test: ["CMD-SHELL", "wget -q http://localhost:8090/health -O /dev/null || exit 1"]
       interval: 5s
@@ -76,6 +85,7 @@ services:
     environment:
       QDRANT_URL: http://qdrant:6333
       GRPC_PORT: 50051
+    logging: *default-logging
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
       interval: 5s
@@ -103,6 +113,7 @@ services:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
       SERVICE_API_KEY: ${SERVICE_API_KEY:-}
+    logging: *default-logging
     depends_on:
       postgres:
         condition: service_healthy

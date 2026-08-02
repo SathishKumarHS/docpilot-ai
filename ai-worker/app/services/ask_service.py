@@ -1,11 +1,15 @@
 from collections.abc import Generator
 
+from app.core.logging import get_logger
 from app.prompts.rag_prompt import build_rag_prompt, build_suggestions_prompt, build_summary_prompt, parse_suggestions
 from app.services.gemini_service import gemini_service
 from app.services.qdrant_service import qdrant_service
 
 
 class AskService:
+
+    def __init__(self):
+        self.log = get_logger(__name__)
 
     def ask(
         self,
@@ -29,7 +33,12 @@ class AskService:
             chat_history,
         )
 
-        return gemini_service.generate_answer(prompt)
+        answer = gemini_service.generate_answer(prompt)
+        self.log.info(
+            "ask client_id=%s document_id=%s hits=%d answer_length=%d",
+            client_id, document_id, len(search_results), len(answer),
+        )
+        return answer
 
     def ask_stream(
         self,
@@ -45,6 +54,11 @@ class AskService:
             client_id=client_id,
             document_id=document_id,
             limit=20,
+        )
+
+        self.log.info(
+            "ask_stream client_id=%s document_id=%s hits=%d",
+            client_id, document_id, len(search_results),
         )
 
         prompt = build_rag_prompt(
@@ -81,12 +95,18 @@ class AskService:
 
         prompt = build_suggestions_prompt(search_results, chat_history)
         text = gemini_service.generate_answer(prompt)
-        return parse_suggestions(text)
+        questions = parse_suggestions(text)
+        self.log.info(
+            "suggest_questions client_id=%s document_id=%s hits=%d count=%d",
+            client_id, document_id, len(search_results), len(questions),
+        )
+        return questions
 
 
     def summarize(self, chunks: list[str]) -> str:
-        prompt = build_summary_prompt(chunks)
-        return gemini_service.generate_answer(prompt)
+        summary = gemini_service.generate_answer(build_summary_prompt(chunks))
+        self.log.info("summarize chunks=%d summary_length=%d", len(chunks), len(summary))
+        return summary
 
 
 ask_service = AskService()

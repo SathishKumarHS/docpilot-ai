@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Upload as UploadIcon, FileText, ArrowLeft, Sparkles, Loader2, Globe } from "lucide-react"
 import { apiFetch, getAccessToken, getAnonymousToken } from "../lib/auth.ts"
+import { logWarn } from "../lib/logger.ts"
 import AuthControls from "../components/AuthControls.tsx"
 
 export default function UploadPage() {
@@ -80,7 +81,8 @@ export default function UploadPage() {
       navigate(`/chat?documentId=${encodeURIComponent(data.id)}&fileName=${encodeURIComponent(data.fileName)}`, {
         state: { summary: data.summary },
       })
-    } catch {
+    } catch (error) {
+      logWarn("Failed to upload document", { error })
       setError("Failed to upload document. Please try again.")
     } finally {
       setIsUploading(false)

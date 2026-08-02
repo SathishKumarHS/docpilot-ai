@@ -1,6 +1,7 @@
 from uuid import UUID
 import time
 
+from app.core.logging import get_logger
 from app.config.settings import settings
 from app.exceptions import VectorDatabaseError
 from app.models.search import SearchResult
@@ -23,6 +24,9 @@ class QdrantService:
 
     COLLECTION_NAME = settings.qdrant_collection_name
 
+    def __init__(self):
+        self.log = get_logger(__name__)
+
     def create_collection(self):
         last_error = None
         for attempt in range(15):
@@ -35,7 +39,7 @@ class QdrantService:
                 ]
 
                 if self.COLLECTION_NAME in existing:
-                    print(f"Collection '{self.COLLECTION_NAME}' already exists.")
+                    self.log.info("Collection '%s' already exists.", self.COLLECTION_NAME)
                     return
 
                 qdrant_client.create_collection(
@@ -58,11 +62,11 @@ class QdrantService:
                     field_schema=PayloadSchemaType.KEYWORD,
                 )
 
-                print(f"Collection '{self.COLLECTION_NAME}' created.")
+                self.log.info("Collection '%s' created.", self.COLLECTION_NAME)
                 return
             except Exception as e:
                 last_error = e
-                print(f"Waiting for Qdrant (attempt {attempt + 1}/15)...")
+                self.log.warning("Waiting for Qdrant (attempt %d/15)", attempt + 1)
                 time.sleep(2)
 
         raise VectorDatabaseError(f"Failed to create collection after 15 retries: {last_error}")

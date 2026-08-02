@@ -3,9 +3,12 @@ from collections.abc import Generator
 from google.genai import errors as genai_errors
 from google.genai.types import GenerateContentResponse
 
+from app.core.logging import get_logger
 from app.clients.gemini_client import client
 from app.exceptions import EmbeddingError, AnswerGenerationError
 from app.models.embedding import EmbeddingResponse
+
+log = get_logger(__name__)
 
 
 class GeminiService:
@@ -17,8 +20,10 @@ class GeminiService:
                 contents=text,
             )
         except genai_errors.ClientError as e:
+            log.error("Gemini embedding failed: %s", e.message)
             raise EmbeddingError(f"Gemini API error: {e.message}")
         except Exception as e:
+            log.exception("Gemini embedding failed")
             raise EmbeddingError(str(e))
 
         embedding = response.embeddings[0].values
@@ -36,8 +41,10 @@ class GeminiService:
                 contents=texts,
             )
         except genai_errors.ClientError as e:
+            log.error("Gemini batch embedding failed: %s", e.message)
             raise EmbeddingError(f"Gemini API error: {e.message}")
         except Exception as e:
+            log.exception("Gemini batch embedding failed")
             raise EmbeddingError(str(e))
 
         results = []
@@ -56,8 +63,10 @@ class GeminiService:
                 contents=prompt,
             )
         except genai_errors.ClientError as e:
+            log.error("Gemini answer generation failed: %s", e.message)
             raise AnswerGenerationError(f"Gemini API error: {e.message}")
         except Exception as e:
+            log.exception("Gemini answer generation failed")
             raise AnswerGenerationError(str(e))
 
         return response.text
@@ -72,8 +81,10 @@ class GeminiService:
                 if chunk.text:
                     yield chunk.text
         except genai_errors.ClientError as e:
+            log.error("Gemini streaming generation failed: %s", e.message)
             raise AnswerGenerationError(f"Gemini API error: {e.message}")
         except Exception as e:
+            log.exception("Gemini streaming generation failed")
             raise AnswerGenerationError(str(e))
 
 

@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { ArrowLeft, FileText, MessageCircle, Trash2, Sparkles, Loader2, Globe, Upload, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react"
 import { apiFetch, getAccessToken, getAnonymousToken } from "../lib/auth.ts"
+import { logWarn } from "../lib/logger.ts"
 import AuthControls from "../components/AuthControls.tsx"
 
 interface Document {
@@ -44,8 +45,8 @@ export default function Documents() {
         const data = await res.json()
         setDocuments(data.content ?? data)
       }
-    } catch {
-      // ignore
+    } catch (error) {
+      logWarn("Failed to fetch documents", { error })
     } finally {
       setIsLoading(false)
     }
@@ -65,8 +66,8 @@ export default function Documents() {
       if (res.ok) {
         setDocuments((prev) => prev.filter((d) => d.id !== id))
       }
-    } catch {
-      // ignore
+    } catch (error) {
+      logWarn("Failed to delete document", { error, id })
     } finally {
       setDeletingId(null)
     }

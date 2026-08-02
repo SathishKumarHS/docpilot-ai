@@ -1,14 +1,18 @@
 import asyncio
+import time
 from uuid import UUID
 
 import grpc
 
+from app.core.logging import get_logger
 from app.grpc import aiworker_pb2, aiworker_pb2_grpc
 from app.grpc.aiworker_pb2 import MessageRole
 from app.models.index import ChunkRequest, IndexDocumentRequest as IndexRequestModel
 from app.services.index_service import index_service
 from app.services.ask_service import ask_service
 from app.services.document_service import document_service
+
+log = get_logger(__name__)
 
 
 def _get_client_id(context):
@@ -33,6 +37,7 @@ class AiWorkerGrpcServicer(aiworker_pb2_grpc.AiWorkerServiceServicer):
             return aiworker_pb2.IndexDocumentResponse(indexed_chunks=0)
 
         client_id = _get_client_id(context)
+        start = time.perf_counter()
 
         chunks = [
             ChunkRequest(chunk_id=UUID(c.chunk_id), chunk_index=c.chunk_index, text=c.text)
@@ -43,6 +48,11 @@ class AiWorkerGrpcServicer(aiworker_pb2_grpc.AiWorkerServiceServicer):
             chunks=chunks,
         )
         result = index_service.index_document(model_request, client_id)
+        log.info(
+            "IndexDocument client_id=%s document_id=%s chunks=%d duration_ms=%.1f",
+            client_id, request.document_id, result.indexed_chunks,
+            (time.perf_counter() - start) * 1000,
+        )
         return aiworker_pb2.IndexDocumentResponse(indexed_chunks=result.indexed_chunks)
 
     def Ask(self, request, context):
@@ -50,6 +60,7 @@ class AiWorkerGrpcServicer(aiworker_pb2_grpc.AiWorkerServiceServicer):
             return aiworker_pb2.AskResponse(answer="")
 
         client_id = _get_client_id(context)
+        start = time.perf_counter()
 
         chat_history = [(MessageRole.Name(m.role).lower(), m.content) for m in request.chat_history]
 
@@ -59,6 +70,11 @@ class AiWorkerGrpcServicer(aiworker_pb2_grpc.AiWorkerServiceServicer):
             document_id=request.document_id or None,
             chat_history=chat_history,
         )
+        log.info(
+            "Ask client_id=%s document_id=%s answer_length=%d duration_ms=%.1f",
+            client_id, request.document_id, len(answer),
+            (time.perf_counter() - start) * 1000,
+        )
         return aiworker_pb2.AskResponse(answer=answer)
 
     def AskStream(self, request, context):
@@ -66,6 +82,8 @@ class AiWorkerGrpcServicer(aiworker_pb2_grpc.AiWorkerServiceServicer):
             return
 
         client_id = _get_client_id(context)
+        start = time.perf_counter()
+        total_tokens = 0
 
         chat_history = [(MessageRole.Name(m.role).lower(), m.content) for m in request.chat_history]
 
@@ -75,16 +93,30 @@ class AiWorkerGrpcServicer(aiworker_pb2_grpc.AiWorkerServiceServicer):
             document_id=request.document_id or None,
             chat_history=chat_history,
         ):
+            total_tokens += 1
             yield aiworker_pb2.AskStreamResponse(token=token)
 
+        log.info(
+            "AskStream client_id=%s document_id=%s tokens=%d duration_ms=%.1f",
+            client_id, request.document_id, total_tokens,
+            (time.perf_counter() - start) * 1000,
+        )
         yield aiworker_pb2.AskStreamResponse(done=True)
 
     def SummarizeDocument(self, request, context):
         if not _authenticated(context):
             return aiworker_pb2.SummarizeDocumentResponse()
 
+        client_id = _get_client_id(context)
+        start = time.perf_counter()
+
         chunks = [c.text for c in request.chunks]
         summary = ask_service.summarize(chunks)
+        log.info(
+            "SummarizeDocument client_id=%s chunks=%d summary_length=%d duration_ms=%.1f",
+            client_id, len(chunks), len(summary),
+            (time.perf_counter() - start) * 1000,
+        )
         return aiworker_pb2.SummarizeDocumentResponse(summary=summary)
 
     def SuggestQuestions(self, request, context):
@@ -92,6 +124,7 @@ class AiWorkerGrpcServicer(aiworker_pb2_grpc.AiWorkerServiceServicer):
             return aiworker_pb2.SuggestQuestionsResponse()
 
         client_id = _get_client_id(context)
+        start = time.perf_counter()
 
         chat_history = [(MessageRole.Name(m.role).lower(), m.content) for m in request.chat_history]
 
@@ -100,7 +133,11 @@ class AiWorkerGrpcServicer(aiworker_pb2_grpc.AiWorkerServiceServicer):
             document_id=request.document_id or None,
             chat_history=chat_history,
         )
-
+        log.info(
+            "SuggestQuestions client_id=%s document_id=%s count=%d duration_ms=%.1f",
+            client_id, request.document_id, len(questions),
+            (time.perf_counter() - start) * 1000,
+        )
         return aiworker_pb2.SuggestQuestionsResponse(questions=questions)
 
     def DeleteDocument(self, request, context):
@@ -108,6 +145,7 @@ class AiWorkerGrpcServicer(aiworker_pb2_grpc.AiWorkerServiceServicer):
             return aiworker_pb2.DeleteDocumentResponse(deleted=False)
 
         client_id = _get_client_id(context)
+        start = time.perf_counter()
 
         loop = asyncio.new_event_loop()
         try:
@@ -117,6 +155,11 @@ class AiWorkerGrpcServicer(aiworker_pb2_grpc.AiWorkerServiceServicer):
         finally:
             loop.close()
 
+        log.info(
+            "DeleteDocument client_id=%s document_id=%s duration_ms=%.1f",
+            client_id, request.document_id,
+            (time.perf_counter() - start) * 1000,
+        )
         return aiworker_pb2.DeleteDocumentResponse(deleted=True)
 
 
@@ -127,5 +170,5 @@ async def serve_grpc(port: int):
     )
     server.add_insecure_port(f"[::]:{port}")
     await server.start()
-    print(f"gRPC server listening on port {port}")
+    log.info("gRPC server listening on port %d", port)
     await server.wait_for_termination()
